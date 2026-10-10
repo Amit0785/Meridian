@@ -199,7 +199,7 @@ export const ApiDocsModal: React.FC<ApiDocsModalProps> = ({ isOpen, onClose }) =
                   <span className="px-2 py-0.5 bg-sky-100 text-sky-800 rounded font-bold">GET</span>
                   <span className="font-bold text-slate-900">/api/v1/posts</span>
                 </div>
-                <p className="text-slate-600 mb-1">Paginated blog posts with filtering (category, tag, search, authorId, page, limit).</p>
+                <p className="text-slate-600 mb-1">Paginated blog posts with filtering (tag, search, authorId, page, limit).</p>
                 <p className="text-slate-400 font-mono text-[11px]">Automatically excludes soft-deleted articles unless queried by admin.</p>
               </div>
 

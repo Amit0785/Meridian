@@ -6,13 +6,12 @@ import { catchAsync } from '../utils/catchAsync';
 import { status } from '../utils/status';
 
 /**
- * List posts with pagination, category, tag, search, and soft-delete filters
+ * List posts with pagination, tag, search, and soft-delete filters
  */
 export const listPosts = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
   const page = parseInt((req.query.page as string) || '1', 10);
   const limit = parseInt((req.query.limit as string) || '9', 10);
   const search = req.query.search as string;
-  const category = req.query.category as string;
   const tag = req.query.tag as string;
   const authorId = req.query.authorId as string;
   const sortBy = ((req.query.sortBy as 'createdAt' | 'views' | 'title') || 'createdAt');
@@ -29,8 +28,6 @@ export const listPosts = catchAsync(async (req: AuthenticatedRequest, res: Respo
     page,
     limit,
     search,
-    category,
-    tag,
     authorId,
     sortBy,
     sortOrder,
@@ -155,7 +152,7 @@ export const hardDeletePost = catchAsync(async (req: AuthenticatedRequest, res: 
 });
 
 /**
- * Get post categories and tags taxonomy
+ * Get post tags taxonomy
  */
 export const getTaxonomy = catchAsync(async (_req: AuthenticatedRequest, res: Response) => {
   const taxonomy = await PostService.getTaxonomy();

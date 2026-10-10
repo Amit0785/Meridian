@@ -59,13 +59,13 @@ meridian/
 ├── server/
 │   ├── config/
 │   │   ├── env.ts                # Environment variable configuration
-│   │   ├── database.ts           # Mongoose ODM store & database engine
+│   │   ├── database.ts           # Mongoose ODM store & database engine (MongoDB)
 │   │   └── swagger.ts            # Swagger OpenAPI 3.0 specification schemas
 │   ├── schema/
-│   │   ├── userschema.ts         # User schema with bcrypt hashing & roles
-│   │   ├── postschema.ts         # Post schema: slugs, soft-deletes, indexing
-│   │   ├── commentschema.ts      # Mongoose parent-child post reference model
-│   │   └── activitylogschema.ts  # Audit logging schema
+│   │   ├── userschema.ts         # User Mongoose schema with bcrypt hashing & roles
+│   │   ├── postschema.ts         # Post Mongoose schema: slugs, soft-deletes, indexing
+│   │   ├── commentschema.ts      # Comment Mongoose parent-child post reference model
+│   │   └── activitylogschema.ts  # Audit logging Mongoose schema
 │   ├── middleware/
 │   │   ├── auth.ts               # JWT validation & req.user attachment
 │   │   ├── rbac.ts               # Role requirements & resource ownership
@@ -91,6 +91,8 @@ meridian/
 │   │   ├── adminController.ts    # Admin control endpoints with catchAsync
 │   │   └── testController.ts     # Test runner endpoint with catchAsync
 │   ├── utils/
+│   │   ├── jwt.ts                # Token generation & verification helpers
+│   │   ├── types.ts              # Core TypeScript interface properties
 │   │   ├── catchAsync.ts         # Async handler wrapper forwarding to next(err)
 │   │   └── status.ts             # Semantic HTTP status codes (200, 201, 400, etc.)
 │   ├── routes/
@@ -109,7 +111,7 @@ meridian/
     │   ├── hooks.ts               # Typed useAppDispatch & useAppSelector
     │   └── slices/
     │       ├── authSlice.ts       # Auth state, login, register, logout, SSO thunks
-    │       ├── postsSlice.ts      # Posts CRUD, slugs, soft deletes, taxonomy
+    │       ├── postsSlice.ts      # Posts CRUD, slugs, soft deletes, tag taxonomy
     │       ├── notificationsSlice.ts # Live SSE notification items & unread count
     │       └── uiSlice.ts         # Navigation tabs, modal visibility flags
     ├── context/
@@ -126,7 +128,7 @@ meridian/
     │   ├── ApiDocsModal.tsx       # Interactive REST API specification
     │   └── TestRunnerModal.tsx    # In-app unit & integration test runner
     ├── pages/
-    │   ├── HomePage.tsx           # Hero, categories, search, pagination
+    │   ├── HomePage.tsx           # Hero, tag filter, search, pagination
     │   ├── AdminDashboard.tsx     # Admin panel (KPIs, Users, Trash, Moderation)
     │   └── MyPostsPage.tsx        # User's stories & personal trash filter
     └── App.tsx                    # Main React application
@@ -156,10 +158,18 @@ meridian/
 
 ### 3. Post Management
 - **CRUD Operations**: Complete create, read, update, delete lifecycles.
-- **URL-Friendly Slugs**: Auto-generated kebab-case slugs with collision resolution (e.g. `architecting-resilient-distributed-systems`).
+- **Model Fields (Document Compliant)**:
+  - `title`: Post headline (validated minimum 5 characters).
+  - `content`: Markdown body content (validated minimum 20 characters).
+  - `author`: Mongoose reference linking to the `User` document.
+  - `timestamps`: Native MongoDB timestamps (`createdAt` and `updatedAt`).
+  - `slug`: URL-friendly kebab-case slug with automatic deduplication.
+  - `tags`: Array of taxonomy tags.
+  - `isDeleted` & `deletedAt`: Soft delete flags.
+  - *(Note: No category field is present on posts or frontend, aligning strictly with document requirements).*
 - **Soft Deletes**: Posts marked `isDeleted: true` with a `deletedAt` timestamp. Hidden from the standard public feed while preserved in the database.
 - **Restoration & Purge**: Authors and admins can restore soft-deleted posts back to the live feed; Admins can permanently purge them.
-- **Search & Pagination**: Live query filtering across titles, excerpts, tags, and categories.
+- **Search & Pagination**: Live query filtering across titles, excerpts, and tags.
 
 ### 4. Comments
 - **Mongoose Relational References**: Comments store references to `postId` and author `userId`.
@@ -168,18 +178,25 @@ meridian/
 
 ### 5. Admin Panel
 - **Dedicated Dashboard UI**:
-  - **KPI Cards**: Real-time totals for Users, Posts (Active vs Trash), Comments, and Views.
+  - **KPI Cards**: Real-time totals for Users, Posts (Active vs Trash), and Comments.
   - **Audit Logs Tab**: Chronological audit feed captured by Express activity logger middleware.
   - **User Directory**: View user post counts, toggle Admin roles, suspend/activate accounts, or delete users.
   - **Trash Bin**: Inspect all soft-deleted articles and restore them with 1 click.
   - **Comment Moderation**: Review all discussions across posts and remove spam.
 
-### 6. Real-Time Notifications (Bonus Feature)
+### 6. Database Engine (MongoDB with Mongoose ODM)
+- **Zero JSON Database Stores**: Replaced all file-based JSON stores (`db_store.json`) with official MongoDB ODM (Mongoose).
+- **Embedded & Cloud Support**:
+  - Automatically launches an embedded, zero-configuration in-memory MongoDB instance via `mongodb-memory-server` in sandbox/evaluator environments.
+  - Supports live remote MongoDB clusters via `MONGODB_URI` environment variable when configured.
+- **Database Indexing**: Enforces indexes on `User.email` (unique), `Post.slug` (unique), `Post.author`, `Post.isDeleted`, and `Comment.postId`.
+
+### 7. Real-Time Notifications
 - Connected via Server-Sent Events (`/api/v1/notifications/stream`).
 - Automatically broadcasts when a new story is published, a comment is submitted, or a post is soft-deleted/restored.
 
-### 7. Unit & Integration Testing
-- Dedicated in-app **Test Console** (`/api/v1/tests/run`) that verifies:
+### 8. Unit & Integration Testing
+- Dedicated in-app **Test Console** (`/api/v1/tests/run`) and CLI runner (`npm run test`) verifying:
   1. Bcrypt Password Hashing & Registration (Unit)
   2. JWT Access & Refresh Token Issuance and Verification (Integration)
   3. URL-Friendly Slug Generation & Sanitization (Unit)
@@ -187,6 +204,9 @@ meridian/
   5. RBAC Authorization & Ownership Isolation (Integration)
   6. Mongoose Post-Comment Relational Referencing (Integration)
   7. Admin Soft-Delete Recovery & Restoration (Integration)
+  8. Comment CRUD & Authorization Checks (Integration)
+  9. Request Payload Schema Validation with Zod (Unit)
+  10. Performance Optimization: Pagination & Lean Projections (Integration)
 
 ---
 
@@ -198,7 +218,7 @@ Create a `.env` file in the root directory (based on `.env.example`):
 PORT=3000
 NODE_ENV=development
 
-# MongoDB Connection
+# MongoDB Connection (Defaults to embedded in-memory MongoDB if omitted)
 MONGODB_URI=mongodb://localhost:27017/meridian_blog
 
 # JWT Secrets & Expiration
@@ -226,6 +246,12 @@ npm install
 npm run dev
 ```
 The server will boot on `http://localhost:3000` with both Express REST endpoints and Vite React client mounted together.
+
+### Run Automated Tests
+```bash
+npm run test
+```
+Executes the full 10-test unit and integration test suite against the MongoDB database engine.
 
 ### Run Production Build
 ```bash
@@ -264,8 +290,8 @@ To execute authenticated endpoints (`/api/v1/posts` [POST/PUT/DELETE], `/api/v1/
 | `POST` | `/api/v1/auth/refresh` | Exchange refresh token for fresh access token | No |
 | `POST` | `/api/v1/auth/social-login` | Google / Facebook OAuth single sign-on | No |
 | `GET` | `/api/v1/auth/me` | Retrieve profile of authenticated user | Yes (Bearer Token) |
-| `GET` | `/api/v1/posts` | List posts (pagination, category, search) | Optional |
-| `GET` | `/api/v1/posts/taxonomy` | Active categories and tags | Optional |
+| `GET` | `/api/v1/posts` | List posts (pagination, tag, search) | Optional |
+| `GET` | `/api/v1/posts/taxonomy` | Active tags | Optional |
 | `GET` | `/api/v1/posts/:slugOrId`| Retrieve single post by slug or ID | Optional |
 | `POST` | `/api/v1/posts` | Create new article with slug | Yes |
 | `PUT` | `/api/v1/posts/:id` | Update article | Yes (Owner / Admin) |

@@ -54,11 +54,15 @@ export const PostCard: React.FC<PostCardProps> = ({
 
         {/* Clean Unboxed Metadata with Typographic Separators (Zero-Pill Discipline) */}
         <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
-          <span className="font-semibold text-slate-800">{post.category}</span>
-          <span aria-hidden="true" className="text-slate-300">·</span>
-          <span>{readTimeMin} min read</span>
+          <span className="font-semibold text-slate-700">{readTimeMin} min read</span>
           <span aria-hidden="true" className="text-slate-300">·</span>
           <span>{formattedDate}</span>
+          {post.tags && post.tags.length > 0 && (
+            <>
+              <span aria-hidden="true" className="text-slate-300">·</span>
+              <span className="text-slate-500">{post.tags[0]}</span>
+            </>
+          )}
         </div>
 
         {/* Article Title */}

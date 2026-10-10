@@ -59,7 +59,7 @@ export const DemoGuideModal: React.FC<DemoGuideModalProps> = ({
               <span className="font-mono text-slate-400 text-[11px]">Minutes 0:00 - 2:00</span>
             </div>
             <p className="text-slate-600">
-              Introduce the <strong>Meridian MERN Blog Platform</strong>. Show the clean zero-pill typographic layout, category filtering (Architecture, Design &amp; UX, Security), live debounced search, and pagination. Click into an article to showcase the <strong>Markdown reader</strong>, reading time estimation, author profile card, and discussion tree.
+              Introduce the <strong>Meridian MERN Blog Platform</strong>. Show the clean zero-pill typographic layout, tag filtering, live debounced search, and pagination. Click into an article to showcase the <strong>Markdown reader</strong>, reading time estimation, author profile card, and discussion tree.
             </p>
           </div>
 

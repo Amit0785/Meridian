@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Post, Pagination } from '../types';
 import { api } from '../lib/api';
 import { PostCard } from '../components/PostCard';
-import { Search, ChevronLeft, ChevronRight, PenSquare, Sparkles, Filter } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, PenSquare, Filter } from 'lucide-react';
 
 interface HomePageProps {
   onSelectPost: (post: Post) => void;
@@ -10,8 +10,6 @@ interface HomePageProps {
   onDeletePost: (post: Post) => void;
   onRestorePost: (post: Post) => void;
   onOpenNewPost: () => void;
-  selectedCategory: string;
-  setSelectedCategory: (cat: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -20,8 +18,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   onDeletePost,
   onRestorePost,
   onOpenNewPost,
-  selectedCategory,
-  setSelectedCategory,
 }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
@@ -32,17 +28,18 @@ export const HomePage: React.FC<HomePageProps> = ({
     hasNextPage: false,
     hasPrevPage: false,
   });
-  const [categories, setCategories] = useState<string[]>(['All']);
   const [search, setSearch] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string>('All');
+  const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch Taxonomy (categories & tags)
+  // Fetch Taxonomy (tags)
   useEffect(() => {
     api.get('/posts/taxonomy')
       .then(res => {
-        if (res.success && res.data?.categories) {
-          setCategories(res.data.categories);
+        if (res.success && res.data?.tags) {
+          setTags(['All', ...res.data.tags]);
         }
       })
       .catch(() => {});
@@ -57,8 +54,8 @@ export const HomePage: React.FC<HomePageProps> = ({
       params.append('page', pageToLoad.toString());
       params.append('limit', '6');
 
-      if (selectedCategory && selectedCategory !== 'All') {
-        params.append('category', selectedCategory);
+      if (selectedTag && selectedTag !== 'All') {
+        params.append('tag', selectedTag);
       }
       if (search.trim()) {
         params.append('search', search.trim());
@@ -76,7 +73,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, search]);
+  }, [selectedTag, search]);
 
   useEffect(() => {
     fetchPosts(1);
@@ -87,7 +84,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
-      {/* Hero Header (Natural Editorial Title Case) */}
+      {/* Hero Header */}
       <section className="border-b border-slate-200 pb-10">
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 text-xs font-mono text-slate-500 mb-3 uppercase tracking-wider">
@@ -95,7 +92,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <span aria-hidden="true">·</span>
             <span>REST API v1</span>
             <span aria-hidden="true">·</span>
-            <span>MongoDB ODM</span>
+            <span>MongoDB &amp; Mongoose ODM</span>
           </div>
           <h1
             className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1] mb-5"
@@ -111,19 +108,19 @@ export const HomePage: React.FC<HomePageProps> = ({
 
       {/* Interactive Controls & Filter Bar */}
       <section className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        {/* Category Tabs (Functional buttons as allowed in Frontend Design) */}
+        {/* Tags filter if available */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
-          {categories.map(cat => (
+          {tags.length > 0 && tags.map(tag => (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              key={tag}
+              onClick={() => setSelectedTag(tag)}
               className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
-                selectedCategory === cat
+                selectedTag === tag
                   ? 'bg-slate-900 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'
               }`}
             >
-              {cat}
+              {tag}
             </button>
           ))}
         </div>
@@ -170,8 +167,8 @@ export const HomePage: React.FC<HomePageProps> = ({
             <h4 className="text-base font-bold text-slate-900">No publications found</h4>
             <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
               {search
-                ? `No articles matched query "${search}". Try clearing your search filters.`
-                : 'No articles exist in this category yet. Be the first to publish one!'}
+                ? `No articles matched query "${search}". Try clearing your search.`
+                : 'No articles exist yet. Be the first to publish one!'}
             </p>
           </div>
           <button
@@ -185,56 +182,57 @@ export const HomePage: React.FC<HomePageProps> = ({
       ) : (
         <div className="space-y-8">
           {/* Featured Post Card (Hero) */}
-          {featuredPost && pagination.page === 1 && !search && (
+          {featuredPost && pagination.page === 1 && !search && selectedTag === 'All' && (
             <div className="mb-8">
               <PostCard
                 post={featuredPost}
-                onSelect={onSelectPost}
-                onEdit={onEditPost}
-                onDelete={onDeletePost}
-                onRestore={onRestorePost}
                 featured={true}
+                onSelect={() => onSelectPost(featuredPost)}
+                onEdit={() => onEditPost(featuredPost)}
+                onDelete={() => onDeletePost(featuredPost)}
+                onRestore={() => onRestorePost(featuredPost)}
               />
             </div>
           )}
 
-          {/* Grid of Remaining Posts */}
+          {/* Regular Posts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(pagination.page === 1 && !search ? regularPosts : posts).map(post => (
+            {(pagination.page === 1 && !search && selectedTag === 'All' ? regularPosts : posts).map(post => (
               <PostCard
                 key={post._id}
                 post={post}
-                onSelect={onSelectPost}
-                onEdit={onEditPost}
-                onDelete={onDeletePost}
-                onRestore={onRestorePost}
+                featured={false}
+                onSelect={() => onSelectPost(post)}
+                onEdit={() => onEditPost(post)}
+                onDelete={() => onDeletePost(post)}
+                onRestore={() => onRestorePost(post)}
               />
             ))}
           </div>
 
-          {/* Pagination Controls */}
+          {/* Pagination Bar */}
           {pagination.totalPages > 1 && (
             <div className="pt-8 border-t border-slate-200 flex items-center justify-between">
-              <div className="text-xs text-slate-500 font-mono tabular-nums">
-                Page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} total publications)
-              </div>
-
+              <p className="text-xs text-slate-500">
+                Page <span className="font-semibold text-slate-900">{pagination.page}</span> of{' '}
+                <span className="font-semibold text-slate-900">{pagination.totalPages}</span> ({pagination.totalCount} total)
+              </p>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => fetchPosts(pagination.page - 1)}
                   disabled={!pagination.hasPrevPage}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  onClick={() => fetchPosts(pagination.page - 1)}
+                  className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none inline-flex items-center gap-1 transition-colors"
                 >
-                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <ChevronLeft className="w-4 h-4" />
                   <span>Previous</span>
                 </button>
                 <button
-                  onClick={() => fetchPosts(pagination.page + 1)}
                   disabled={!pagination.hasNextPage}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  onClick={() => fetchPosts(pagination.page + 1)}
+                  className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none inline-flex items-center gap-1 transition-colors"
                 >
                   <span>Next</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>

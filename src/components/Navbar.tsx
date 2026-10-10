@@ -23,8 +23,6 @@ interface NavbarProps {
   onOpenTestRunner: () => void;
   onOpenNotifications: () => void;
   onOpenDemoGuide: () => void;
-  selectedCategory: string;
-  setSelectedCategory: (cat: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({

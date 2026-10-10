@@ -9,22 +9,12 @@ interface PostEditorModalProps {
     title: string;
     content: string;
     excerpt?: string;
-    category: string;
     tags: string[];
     coverImage?: string;
     featured?: boolean;
   }) => Promise<void>;
   initialData?: Post | null;
 }
-
-const CATEGORIES = [
-  'Architecture',
-  'Design & UX',
-  'Security',
-  'Engineering',
-  'Cloud Infrastructure',
-  'Database Systems',
-];
 
 export const PostEditorModal: React.FC<PostEditorModalProps> = ({
   isOpen,
@@ -35,7 +25,6 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [excerpt, setExcerpt] = useState('');
-  const [category, setCategory] = useState(CATEGORIES[0]);
   const [tagsInput, setTagsInput] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [featured, setFeatured] = useState(false);
@@ -48,7 +37,6 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
       setTitle(initialData.title);
       setContent(initialData.content);
       setExcerpt(initialData.excerpt || '');
-      setCategory(initialData.category || CATEGORIES[0]);
       setTagsInput(initialData.tags?.join(', ') || '');
       setCoverImage(initialData.coverImage || '');
       setFeatured(initialData.featured || false);
@@ -56,7 +44,6 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
       setTitle('');
       setContent('');
       setExcerpt('');
-      setCategory(CATEGORIES[0]);
       setTagsInput('');
       setCoverImage('');
       setFeatured(false);
@@ -93,7 +80,6 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
         title: title.trim(),
         content: content.trim(),
         excerpt: excerpt.trim() || undefined,
-        category,
         tags,
         coverImage: coverImage.trim() || undefined,
         featured,
@@ -151,37 +137,18 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
             />
           </div>
 
-          {/* Category & Tags Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                Category
-              </label>
-              <select
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-                className="w-full text-sm text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              >
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                Tags (Comma separated)
-              </label>
-              <input
-                type="text"
-                value={tagsInput}
-                onChange={e => setTagsInput(e.target.value)}
-                placeholder="Microservices, Node.js, Security"
-                className="w-full text-sm text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              />
-            </div>
+          {/* Tags */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Tags (Comma separated)
+            </label>
+            <input
+              type="text"
+              value={tagsInput}
+              onChange={e => setTagsInput(e.target.value)}
+              placeholder="Microservices, Node.js, Security"
+              className="w-full text-sm text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            />
           </div>
 
           {/* Excerpt */}

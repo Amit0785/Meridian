@@ -134,12 +134,12 @@ export const TestRunnerModal: React.FC<TestRunnerModalProps> = ({ isOpen, onClos
                     <span className="font-bold text-slate-200">{test.name}</span>
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded ${
-                        test.category === 'Unit'
+                        test.testType === 'Unit'
                           ? 'bg-sky-950 text-sky-400 border border-sky-800'
                           : 'bg-purple-950 text-purple-400 border border-purple-800'
                       }`}
                     >
-                      {test.category}
+                      {test.testType}
                     </span>
                   </div>
                   <span className="text-slate-500 tabular-nums shrink-0">

@@ -19,7 +19,6 @@ export interface Post {
   slug: string;
   content: string;
   excerpt: string;
-  category: string;
   tags: string[];
   coverImage?: string;
   author: {
@@ -78,12 +77,11 @@ export interface PlatformStats {
     totalComments: number;
     totalViews: number;
   };
-  categoryStats: Record<string, number>;
 }
 
 export interface TestResultItem {
   id: string;
-  category: 'Unit' | 'Integration';
+  testType: 'Unit' | 'Integration';
   name: string;
   description: string;
   passed: boolean;

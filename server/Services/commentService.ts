@@ -1,46 +1,59 @@
-import { CommentModel } from '../schema/commentschema';
-import { PostModel } from '../schema/postschema';
+import {
+  findCommentsForPost,
+  createCommentDoc,
+  updateCommentById,
+  deleteCommentById,
+  findAllCommentsPopulated,
+} from '../schema/commentschema';
+import { findPostById } from '../schema/postschema';
 import { AppError } from '../middleware/errorHandler';
 
-export class CommentService {
-  static async getComments(postId: string) {
-    const post = await PostModel.findById(postId);
-    if (!post) {
-      throw new AppError('Associated post not found', 404, 'POST_NOT_FOUND');
-    }
-    return CommentModel.findForPost(postId);
+export async function getCommentsService(postId: string) {
+  const post = await findPostById(postId);
+  if (!post) {
+    throw new AppError('Associated post not found', 404, 'POST_NOT_FOUND');
   }
-
-  static async addComment(postId: string, authorId: string, content: string) {
-    const post = await PostModel.findById(postId);
-    if (!post) {
-      throw new AppError('Cannot comment on non-existent post', 404, 'POST_NOT_FOUND');
-    }
-
-    return CommentModel.create({
-      postId,
-      author: authorId,
-      content,
-    });
-  }
-
-  static async updateComment(commentId: string, content: string) {
-    const updated = await CommentModel.findByIdAndUpdate(commentId, { content });
-    if (!updated) {
-      throw new AppError('Comment not found', 404, 'COMMENT_NOT_FOUND');
-    }
-    return updated;
-  }
-
-  static async deleteComment(commentId: string) {
-    const deleted = await CommentModel.findByIdAndDelete(commentId);
-    if (!deleted) {
-      throw new AppError('Comment not found', 404, 'COMMENT_NOT_FOUND');
-    }
-    return { success: true, message: 'Comment deleted successfully' };
-  }
-
-  static async getAllCommentsAdmin(limit = 50) {
-    return CommentModel.findAllPopulated(limit);
-  }
+  return findCommentsForPost(postId);
 }
+
+export async function addCommentService(postId: string, authorId: string, content: string) {
+  const post = await findPostById(postId);
+  if (!post) {
+    throw new AppError('Cannot comment on non-existent post', 404, 'POST_NOT_FOUND');
+  }
+
+  return createCommentDoc({
+    postId,
+    author: authorId,
+    content,
+  });
+}
+
+export async function updateCommentService(commentId: string, content: string) {
+  const updated = await updateCommentById(commentId, { content });
+  if (!updated) {
+    throw new AppError('Comment not found', 404, 'COMMENT_NOT_FOUND');
+  }
+  return updated;
+}
+
+export async function deleteCommentService(commentId: string) {
+  const deleted = await deleteCommentById(commentId);
+  if (!deleted) {
+    throw new AppError('Comment not found', 404, 'COMMENT_NOT_FOUND');
+  }
+  return { success: true, message: 'Comment deleted successfully' };
+}
+
+export async function getAllCommentsAdminService(limit = 50) {
+  return findAllCommentsPopulated(limit);
+}
+
+// Function object namespace for backwards compatibility (no class)
+export const CommentService = {
+  getComments: getCommentsService,
+  addComment: addCommentService,
+  updateComment: updateCommentService,
+  deleteComment: deleteCommentService,
+  getAllCommentsAdmin: getAllCommentsAdminService,
+};

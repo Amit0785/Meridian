@@ -1,18 +1,34 @@
 import { Request, Response, NextFunction } from 'express';
 
-export class AppError extends Error {
+export interface IAppError extends Error {
   statusCode: number;
   code: string;
   details?: any;
-
-  constructor(message: string, statusCode = 500, code = 'INTERNAL_ERROR', details?: any) {
-    super(message);
-    this.name = 'AppError';
-    this.statusCode = statusCode;
-    this.code = code;
-    this.details = details;
-  }
 }
+
+export interface AppErrorConstructor {
+  new (message: string, statusCode?: number, code?: string, details?: any): IAppError;
+  (message: string, statusCode?: number, code?: string, details?: any): IAppError;
+}
+
+export function createAppError(message: string, statusCode = 500, code = 'INTERNAL_ERROR', details?: any): IAppError {
+  const err = new Error(message) as IAppError;
+  err.name = 'AppError';
+  err.statusCode = statusCode;
+  err.code = code;
+  err.details = details;
+  return err;
+}
+
+export const AppError: AppErrorConstructor = function (
+  this: any,
+  message: string,
+  statusCode = 500,
+  code = 'INTERNAL_ERROR',
+  details?: any
+): IAppError {
+  return createAppError(message, statusCode, code, details);
+} as unknown as AppErrorConstructor;
 
 export const errorHandler = (
   err: any,

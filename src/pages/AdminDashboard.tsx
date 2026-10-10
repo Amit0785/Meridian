@@ -468,8 +468,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectPost }) 
                     <div className="text-slate-500 text-[11px] flex items-center gap-2">
                       <span>Author: {p.author.name}</span>
                       <span>·</span>
-                      <span>Category: {p.category}</span>
-                      <span>·</span>
                       <span className="text-rose-600 font-semibold">
                         Deleted: {p.deletedAt ? new Date(p.deletedAt).toLocaleDateString() : 'Yes'}
                       </span>

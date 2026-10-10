@@ -252,18 +252,18 @@ export interface ApiResponse<T = any> {
 }
 
 // Convenience wrapper maintaining compatibility with existing codebase
-class ApiClient {
-  getAccessToken(): string | null {
+export function createApiClient() {
+  function getAccessToken(): string | null {
     const fromStore = store.getState().auth.token;
     return fromStore || Storage.getItem('token') || Storage.getItem('meridian_access_token');
   }
 
-  getRefreshToken(): string | null {
+  function getRefreshToken(): string | null {
     const fromStore = store.getState().auth.refreshToken;
     return fromStore || Storage.getItem('refresh-token') || Storage.getItem('meridian_refresh_token');
   }
 
-  setTokens(access: string, refresh: string) {
+  function setTokens(access: string, refresh: string) {
     Storage.setItem('token', access);
     Storage.setItem('refresh-token', refresh);
     Storage.setItem('meridian_access_token', access);
@@ -271,7 +271,7 @@ class ApiClient {
     store.dispatch(setToken({ token: access, refreshToken: refresh }));
   }
 
-  clearTokens() {
+  function clearTokens() {
     Storage.removeItem('token');
     Storage.removeItem('refresh-token');
     Storage.removeItem('meridian_access_token');
@@ -279,31 +279,43 @@ class ApiClient {
     store.dispatch(logoutRequest());
   }
 
-  async get<T = any>(endpoint: string, config?: any): Promise<ApiResponse<T>> {
+  async function get<T = any>(endpoint: string, config?: any): Promise<ApiResponse<T>> {
     const res = await instance.get<ApiResponse<T>>(endpoint, config);
     return res.data;
   }
 
-  async post<T = any>(endpoint: string, body?: any, config?: any): Promise<ApiResponse<T>> {
+  async function post<T = any>(endpoint: string, body?: any, config?: any): Promise<ApiResponse<T>> {
     const res = await instance.post<ApiResponse<T>>(endpoint, body, config);
     return res.data;
   }
 
-  async put<T = any>(endpoint: string, body?: any, config?: any): Promise<ApiResponse<T>> {
+  async function put<T = any>(endpoint: string, body?: any, config?: any): Promise<ApiResponse<T>> {
     const res = await instance.put<ApiResponse<T>>(endpoint, body, config);
     return res.data;
   }
 
-  async patch<T = any>(endpoint: string, body?: any, config?: any): Promise<ApiResponse<T>> {
+  async function patch<T = any>(endpoint: string, body?: any, config?: any): Promise<ApiResponse<T>> {
     const res = await instance.patch<ApiResponse<T>>(endpoint, body, config);
     return res.data;
   }
 
-  async delete<T = any>(endpoint: string, config?: any): Promise<ApiResponse<T>> {
+  async function del<T = any>(endpoint: string, config?: any): Promise<ApiResponse<T>> {
     const res = await instance.delete<ApiResponse<T>>(endpoint, config);
     return res.data;
   }
+
+  return {
+    getAccessToken,
+    getRefreshToken,
+    setTokens,
+    clearTokens,
+    get,
+    post,
+    put,
+    patch,
+    delete: del,
+  };
 }
 
-export const api = new ApiClient();
+export const api = createApiClient();
 export default instance;

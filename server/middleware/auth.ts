@@ -1,18 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { ENV } from '../config/env';
-import { UserModel } from '../schema/userschema';
+import { verifyToken, Payload } from '../utils/jwt';
+import { findUserById, sanitizeUser } from '../schema/userschema';
 import { IUserDoc } from '../config/database';
 
 export interface AuthenticatedRequest extends Request {
   user?: Omit<IUserDoc, 'passwordHash'>;
-}
-
-export interface JWTAccessPayload {
-  userId: string;
-  email: string;
-  role: 'admin' | 'user';
-  name: string;
 }
 
 export const authenticateJWT = async (
@@ -40,8 +32,9 @@ export const authenticateJWT = async (
       return;
     }
 
-    const decoded = jwt.verify(token, ENV.JWT_ACCESS_SECRET) as JWTAccessPayload;
-    const user = await UserModel.findById(decoded.userId);
+    const decoded = verifyToken(token);
+    const userId = decoded.id || (decoded as any).userId;
+    const user = await findUserById(userId);
 
     if (!user) {
       res.status(401).json({
@@ -63,7 +56,7 @@ export const authenticateJWT = async (
       return;
     }
 
-    req.user = UserModel.sanitize(user);
+    req.user = sanitizeUser(user);
     next();
   } catch (err: any) {
     if (err.name === 'TokenExpiredError') {
@@ -101,10 +94,11 @@ export const optionalAuth = async (
     }
 
     if (token) {
-      const decoded = jwt.verify(token, ENV.JWT_ACCESS_SECRET) as JWTAccessPayload;
-      const user = await UserModel.findById(decoded.userId);
+      const decoded = verifyToken(token);
+      const userId = decoded.id || (decoded as any).userId;
+      const user = await findUserById(userId);
       if (user && user.status !== 'suspended') {
-        req.user = UserModel.sanitize(user);
+        req.user = sanitizeUser(user);
       }
     }
   } catch {

@@ -1,267 +1,357 @@
-import { dbStore, IPostDoc } from '../config/database';
-import { UserModel } from './userschema';
+import mongoose from "mongoose";
+import { IPostProps } from "../utils/types";
 
 export interface PostFindOptions {
   includeDeleted?: boolean;
   search?: string;
-  category?: string;
-  tag?: string;
   authorId?: string;
-  sortBy?: 'createdAt' | 'views' | 'title';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "createdAt" | "views" | "title";
+  sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
 }
 
-export class PostModel {
-  static generateSlug(title: string): string {
-    const baseSlug = title
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    
-    let slug = baseSlug || `post-${Date.now()}`;
-    let counter = 1;
-    while (dbStore.posts.some(p => p.slug === slug)) {
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-    return slug;
+const postSchema = new mongoose.Schema<IPostProps>(
+  {
+    title: {
+      type: String,
+      required: [true, "Title is required"],
+      trim: true,
+    },
+    slug: {
+      type: String,
+      required: [true, "Slug is required"],
+      unique: true,
+      lowercase: true,
+    },
+    content: {
+      type: String,
+      required: [true, "Content is required"],
+    },
+    excerpt: {
+      type: String,
+      default: "",
+    },
+    coverImage: {
+      type: String,
+      default:
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "Author is required"],
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    views: {
+      type: Number,
+      default: 0,
+    },
+  },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
+);
+
+postSchema.index({ author: 1, createdAt: -1 });
+postSchema.index({ isDeleted: 1, createdAt: -1 });
+
+export const Post =
+  mongoose.models.Post || mongoose.model<IPostProps>("Post", postSchema);
+export default Post;
+
+// Standalone functions replacing PostModel class
+export async function generateSlug(title: string): Promise<string> {
+  const baseSlug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  let slug = baseSlug || `post-${Date.now()}`;
+  let counter = 1;
+  while (await Post.exists({ slug })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
   }
-
-  static async findById(id: string, includeDeleted = false): Promise<IPostDoc | null> {
-    const post = dbStore.posts.find(p => p._id === id && (includeDeleted || !p.isDeleted));
-    return post ? { ...post } : null;
-  }
-
-  static async findBySlug(slug: string, includeDeleted = false): Promise<IPostDoc | null> {
-    const post = dbStore.posts.find(p => p.slug === slug && (includeDeleted || !p.isDeleted));
-    return post ? { ...post } : null;
-  }
-
-  static async findWithPagination(options: PostFindOptions = {}) {
-    const {
-      includeDeleted = false,
-      search,
-      category,
-      tag,
-      authorId,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-      page = 1,
-      limit = 10,
-    } = options;
-
-    let filtered = dbStore.posts.filter(p => {
-      if (!includeDeleted && p.isDeleted) return false;
-      if (authorId && p.author !== authorId) return false;
-      if (category && category !== 'All' && p.category.toLowerCase() !== category.toLowerCase()) return false;
-      if (tag && !p.tags.some(t => t.toLowerCase() === tag.toLowerCase())) return false;
-      if (search) {
-        const query = search.toLowerCase();
-        const matchesTitle = p.title.toLowerCase().includes(query);
-        const matchesContent = p.content.toLowerCase().includes(query);
-        const matchesExcerpt = p.excerpt.toLowerCase().includes(query);
-        const matchesTags = p.tags.some(t => t.toLowerCase().includes(query));
-        if (!matchesTitle && !matchesContent && !matchesExcerpt && !matchesTags) return false;
-      }
-      return true;
-    });
-
-    // Sort
-    filtered.sort((a, b) => {
-      let valA = a[sortBy];
-      let valB = b[sortBy];
-
-      if (sortBy === 'title') {
-        const comp = String(valA).localeCompare(String(valB));
-        return sortOrder === 'asc' ? comp : -comp;
-      }
-
-      if (sortBy === 'views') {
-        const comp = (valA as number) - (valB as number);
-        return sortOrder === 'asc' ? comp : -comp;
-      }
-
-      // Default createdAt timestamp sort
-      const timeA = new Date(valA as string).getTime();
-      const timeB = new Date(valB as string).getTime();
-      return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
-    });
-
-    const totalCount = filtered.length;
-    const totalPages = Math.ceil(totalCount / limit) || 1;
-    const startIndex = (page - 1) * limit;
-    const paginated = filtered.slice(startIndex, startIndex + limit);
-
-    // Populate Author Reference
-    const populated = await Promise.all(
-      paginated.map(async post => {
-        const authorUser = await UserModel.findById(post.author);
-        return {
-          ...post,
-          author: authorUser
-            ? {
-                _id: authorUser._id,
-                name: authorUser.name,
-                email: authorUser.email,
-                avatar: authorUser.avatar,
-                role: authorUser.role,
-              }
-            : {
-                _id: post.author,
-                name: 'Anonymous',
-                email: 'anonymous@meridian.dev',
-                role: 'user',
-              },
-        };
-      })
-    );
-
-    return {
-      posts: populated,
-      pagination: {
-        page,
-        limit,
-        totalCount,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    };
-  }
-
-  static async create(data: {
-    title: string;
-    content: string;
-    author: string;
-    excerpt?: string;
-    category?: string;
-    tags?: string[];
-    coverImage?: string;
-    featured?: boolean;
-  }): Promise<IPostDoc> {
-    const slug = this.generateSlug(data.title);
-    const newPost: IPostDoc = {
-      _id: `post_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      title: data.title,
-      slug,
-      content: data.content,
-      excerpt: data.excerpt || data.content.slice(0, 160).replace(/[#*`\n]/g, '').trim() + '...',
-      category: data.category || 'General',
-      tags: data.tags || [],
-      coverImage: data.coverImage || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
-      author: data.author,
-      isDeleted: false,
-      deletedAt: null,
-      views: 0,
-      featured: data.featured || false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    dbStore.posts.unshift(newPost);
-    return { ...newPost };
-  }
-
-  static async findByIdAndUpdate(id: string, updates: Partial<IPostDoc>): Promise<IPostDoc | null> {
-    const index = dbStore.posts.findIndex(p => p._id === id);
-    if (index === -1) return null;
-
-    if (updates.title && updates.title !== dbStore.posts[index].title && !updates.slug) {
-      updates.slug = this.generateSlug(updates.title);
-    }
-
-    dbStore.posts[index] = {
-      ...dbStore.posts[index],
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
-
-    return { ...dbStore.posts[index] };
-  }
-
-  static async softDelete(id: string): Promise<IPostDoc | null> {
-    const index = dbStore.posts.findIndex(p => p._id === id);
-    if (index === -1) return null;
-
-    dbStore.posts[index].isDeleted = true;
-    dbStore.posts[index].deletedAt = new Date().toISOString();
-    dbStore.posts[index].updatedAt = new Date().toISOString();
-
-    return { ...dbStore.posts[index] };
-  }
-
-  static async restore(id: string): Promise<IPostDoc | null> {
-    const index = dbStore.posts.findIndex(p => p._id === id);
-    if (index === -1) return null;
-
-    dbStore.posts[index].isDeleted = false;
-    dbStore.posts[index].deletedAt = null;
-    dbStore.posts[index].updatedAt = new Date().toISOString();
-
-    return { ...dbStore.posts[index] };
-  }
-
-  static async hardDelete(id: string): Promise<boolean> {
-    const index = dbStore.posts.findIndex(p => p._id === id);
-    if (index === -1) return false;
-
-    dbStore.posts.splice(index, 1);
-    dbStore.comments = dbStore.comments.filter(c => c.postId !== id);
-    return true;
-  }
-
-  static async incrementViews(id: string): Promise<void> {
-    const post = dbStore.posts.find(p => p._id === id);
-    if (post) {
-      post.views = (post.views || 0) + 1;
-    }
-  }
-
-  static async countDocuments(filter: { isDeleted?: boolean } = {}): Promise<number> {
-    return dbStore.posts.filter(p => {
-      if (filter.isDeleted !== undefined && p.isDeleted !== filter.isDeleted) return false;
-      return true;
-    }).length;
-  }
-
-  static async populateOne(post: IPostDoc) {
-    const authorUser = await UserModel.findById(post.author);
-    return {
-      ...post,
-      author: authorUser
-        ? {
-            _id: authorUser._id,
-            name: authorUser.name,
-            email: authorUser.email,
-            avatar: authorUser.avatar,
-            role: authorUser.role,
-          }
-        : {
-            _id: post.author,
-            name: 'Anonymous',
-            email: 'anonymous@meridian.dev',
-            role: 'user',
-          },
-    };
-  }
+  return slug;
 }
 
-export const PostSchema = PostModel;
+export function generateSlugSync(title: string): string {
+  const baseSlug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
-/**
- * Mongoose Schema Indexes definition for query optimization:
- * - slug: unique index for O(1) post retrieval
- * - author & createdAt: compound index for author feed lookups
- * - isDeleted & createdAt: compound index for filtered public timeline queries
- * - category: index for category taxonomy filter
- */
-export const PostMongooseIndexes = [
-  { fields: { slug: 1 }, options: { unique: true } },
-  { fields: { author: 1, createdAt: -1 } },
-  { fields: { isDeleted: 1, createdAt: -1 } },
-  { fields: { category: 1 } },
-];
+  return baseSlug || `post-${Date.now()}`;
+}
+
+export async function findPostById(
+  id: string,
+  includeDeleted = false,
+): Promise<any | null> {
+  if (!id || !mongoose.isValidObjectId(id)) {
+    return null;
+  }
+  const filter: Record<string, any> = { _id: id };
+  if (!includeDeleted) {
+    filter.isDeleted = false;
+  }
+  return Post.findOne(filter)
+    .populate("author", "name email avatar userRole role bio")
+    .lean();
+}
+
+export async function findPostBySlug(
+  slug: string,
+  includeDeleted = false,
+): Promise<any | null> {
+  const filter: Record<string, any> = { slug };
+  if (!includeDeleted) {
+    filter.isDeleted = false;
+  }
+  return Post.findOne(filter)
+    .populate("author", "name email avatar userRole role bio")
+    .lean();
+}
+
+export async function findPostsWithPagination(options: PostFindOptions = {}) {
+  const {
+    includeDeleted = false,
+    search,
+    authorId,
+    sortBy = "createdAt",
+    sortOrder = "desc",
+    page = 1,
+    limit = 9,
+  } = options;
+
+  const filter: Record<string, any> = {};
+
+  if (!includeDeleted) {
+    filter.isDeleted = false;
+  }
+
+  if (authorId) {
+    if (mongoose.isValidObjectId(authorId)) {
+      filter.author = authorId;
+    } else {
+      return {
+        posts: [],
+        pagination: {
+          page,
+          limit,
+          totalCount: 0,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      };
+    }
+  }
+
+  if (search) {
+    const searchRegex = new RegExp(search, "i");
+    filter.$or = [
+      { title: searchRegex },
+      { content: searchRegex },
+      { excerpt: searchRegex },
+    ];
+  }
+
+  const sortObj: Record<string, any> = {};
+  sortObj[sortBy] = sortOrder === "asc" ? 1 : -1;
+
+  const totalCount = await Post.countDocuments(filter);
+  const totalPages = Math.ceil(totalCount / limit) || 1;
+  const skip = (page - 1) * limit;
+
+  const posts = await Post.find(filter)
+    .sort(sortObj)
+    .skip(skip)
+    .limit(limit)
+    .populate("author", "name email avatar userRole role")
+    .lean();
+
+  const formattedPosts = posts.map((p) => ({
+    ...p,
+    author: p.author || {
+      _id: "unknown",
+      name: "Anonymous",
+      email: "",
+      role: "user",
+    },
+  }));
+
+  return {
+    posts: formattedPosts,
+    pagination: {
+      page,
+      limit,
+      totalCount,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  };
+}
+
+export async function createPostDoc(data: {
+  title: string;
+  content: string;
+  author: string;
+  excerpt?: string;
+  coverImage?: string;
+  _id?: any;
+}): Promise<any> {
+  const slug = await generateSlug(data.title);
+  const excerpt =
+    data.excerpt ||
+    data.content
+      .slice(0, 160)
+      .replace(/[#*`\n]/g, "")
+      .trim() + "...";
+
+  const postDoc: Record<string, any> = {
+    title: data.title,
+    slug,
+    content: data.content,
+    excerpt,
+    coverImage:
+      data.coverImage ||
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+    author: data.author,
+    isDeleted: false,
+    deletedAt: null,
+    views: 0,
+  };
+
+  if (data._id) {
+    postDoc._id = data._id;
+  }
+
+  const created = await Post.create(postDoc);
+  return Post.findById(created._id)
+    .populate("author", "name email avatar userRole role")
+    .lean();
+}
+
+export async function updatePostById(
+  id: string,
+  updates: Partial<IPostProps>,
+): Promise<any | null> {
+  if (!id || !mongoose.isValidObjectId(id)) {
+    return null;
+  }
+
+  if (updates.title && !updates.slug) {
+    const existing = await Post.findById(id);
+    if (existing && existing.title !== updates.title) {
+      updates.slug = await generateSlug(updates.title);
+    }
+  }
+
+  const updated = await Post.findByIdAndUpdate(id, updates, {
+    returnDocument: "after",
+  })
+    .populate("author", "name email avatar userRole role")
+    .lean();
+
+  return updated;
+}
+
+export async function softDeletePostDoc(id: string): Promise<any | null> {
+  if (!id || !mongoose.isValidObjectId(id)) {
+    return null;
+  }
+
+  const updated = await Post.findByIdAndUpdate(
+    id,
+    { isDeleted: true, deletedAt: new Date() },
+    { returnDocument: "after" },
+  )
+    .populate("author", "name email avatar userRole role")
+    .lean();
+
+  return updated;
+}
+
+export async function restorePostDoc(id: string): Promise<any | null> {
+  if (!id || !mongoose.isValidObjectId(id)) {
+    return null;
+  }
+
+  const updated = await Post.findByIdAndUpdate(
+    id,
+    { isDeleted: false, deletedAt: null },
+    { returnDocument: "after" },
+  )
+    .populate("author", "name email avatar userRole role")
+    .lean();
+
+  return updated;
+}
+
+export async function hardDeletePostDoc(id: string): Promise<boolean> {
+  if (!id || !mongoose.isValidObjectId(id)) {
+    return false;
+  }
+
+  const { Comment } = await import("./commentschema");
+  const result = await Post.findByIdAndDelete(id);
+  await Comment.deleteMany({ postId: id });
+  return !!result;
+}
+
+export async function incrementPostViews(id: string): Promise<void> {
+  if (!id || !mongoose.isValidObjectId(id)) {
+    return;
+  }
+  await Post.findByIdAndUpdate(id, { $inc: { views: 1 } });
+}
+
+export async function countPosts(
+  filter: Record<string, any> = {},
+): Promise<number> {
+  return Post.countDocuments(filter);
+}
+
+export async function populateOnePost(post: any) {
+  if (!post) return null;
+  if (post.author && typeof post.author === "object") {
+    return post;
+  }
+  const populated = await Post.findById(post._id || post)
+    .populate("author", "name email avatar userRole role bio")
+    .lean();
+  return populated || post;
+}
+
+// Plain function dictionary for backward compatibility (no class)
+export const PostModel = {
+  generateSlug,
+  generateSlugSync,
+  findById: findPostById,
+  findBySlug: findPostBySlug,
+  findWithPagination: findPostsWithPagination,
+  create: createPostDoc,
+  findByIdAndUpdate: updatePostById,
+  softDelete: softDeletePostDoc,
+  restore: restorePostDoc,
+  hardDelete: hardDeletePostDoc,
+  incrementViews: incrementPostViews,
+  countDocuments: countPosts,
+  populateOne: populateOnePost,
+};

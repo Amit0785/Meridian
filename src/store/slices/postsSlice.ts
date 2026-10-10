@@ -6,8 +6,7 @@ export interface PostsState {
   posts: Post[];
   selectedPost: Post | null;
   editingPost: Post | null;
-  categories: string[];
-  selectedCategory: string;
+  tags: string[];
   searchQuery: string;
   pagination: Pagination | null;
   loading: boolean;
@@ -18,8 +17,7 @@ const initialState: PostsState = {
   posts: [],
   selectedPost: null,
   editingPost: null,
-  categories: ['All'],
-  selectedCategory: 'All',
+  tags: ['All'],
   searchQuery: '',
   pagination: null,
   loading: false,
@@ -29,14 +27,13 @@ const initialState: PostsState = {
 export const fetchPosts = createAsyncThunk(
   'posts/fetchPosts',
   async (
-    options: { page?: number; limit?: number; category?: string; search?: string; authorId?: string; includeDeleted?: boolean } = {},
+    options: { page?: number; limit?: number; search?: string; authorId?: string; includeDeleted?: boolean } = {},
     { rejectWithValue }
   ) => {
     try {
       const params = new URLSearchParams();
       if (options.page) params.append('page', options.page.toString());
       if (options.limit) params.append('limit', options.limit.toString());
-      if (options.category && options.category !== 'All') params.append('category', options.category);
       if (options.search) params.append('search', options.search);
       if (options.authorId) params.append('authorId', options.authorId);
       if (options.includeDeleted) params.append('includeDeleted', 'true');
@@ -160,12 +157,12 @@ export const fetchTaxonomy = createAsyncThunk(
     try {
       const res = await instance1.get(API.posts.taxonomy);
       const data = res.data;
-      if (data?.success && data?.data?.categories) {
-        return data.data.categories as string[];
+      if (data?.success && data?.data?.tags) {
+        return data.data.tags as string[];
       }
-      return ['All'];
+      return [];
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch categories');
+      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch tags');
     }
   }
 );
@@ -179,9 +176,6 @@ export const postsSlice = createSlice({
     },
     setEditingPost: (state, action: PayloadAction<Post | null>) => {
       state.editingPost = action.payload;
-    },
-    setSelectedCategory: (state, action: PayloadAction<string>) => {
-      state.selectedCategory = action.payload;
     },
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
@@ -264,7 +258,7 @@ export const postsSlice = createSlice({
 
     // fetchTaxonomy
     builder.addCase(fetchTaxonomy.fulfilled, (state, action) => {
-      state.categories = action.payload;
+      state.tags = ['All', ...action.payload];
     });
   },
 });
@@ -272,7 +266,6 @@ export const postsSlice = createSlice({
 export const {
   setSelectedPost,
   setEditingPost,
-  setSelectedCategory,
   setSearchQuery,
 } = postsSlice.actions;
 

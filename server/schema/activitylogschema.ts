@@ -1,42 +1,104 @@
-import { dbStore, IActivityLogDoc } from '../config/database';
+import mongoose from "mongoose";
 
-export class ActivityLogModel {
-  static async log(data: {
-    action: string;
-    userId?: string;
-    userEmail?: string;
-    targetType: 'post' | 'comment' | 'user' | 'auth' | 'system';
-    targetId?: string;
-    details: string;
-    ipAddress?: string;
-  }): Promise<IActivityLogDoc> {
-    const newLog: IActivityLogDoc = {
-      _id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      action: data.action,
-      userId: data.userId,
-      userEmail: data.userEmail,
-      targetType: data.targetType,
-      targetId: data.targetId,
-      details: data.details,
-      ipAddress: data.ipAddress,
-      createdAt: new Date().toISOString(),
-    };
-
-    dbStore.activityLogs.unshift(newLog);
-    // Keep max 200 logs
-    if (dbStore.activityLogs.length > 200) {
-      dbStore.activityLogs = dbStore.activityLogs.slice(0, 200);
-    }
-    return newLog;
-  }
-
-  static async findLatest(limit = 50): Promise<IActivityLogDoc[]> {
-    return dbStore.activityLogs.slice(0, limit);
-  }
-
-  static async findRecent(limit = 50): Promise<IActivityLogDoc[]> {
-    return ActivityLogModel.findLatest(limit);
-  }
+export interface IActivityLogDocument {
+  _id: any;
+  action: string;
+  userId?: any;
+  userEmail?: string;
+  targetType: "post" | "comment" | "user" | "auth" | "system";
+  targetId?: string;
+  details: string;
+  ipAddress?: string;
+  createdAt: Date;
 }
 
-export const ActivityLogSchema = ActivityLogModel;
+const activityLogSchema = new mongoose.Schema<IActivityLogDocument>(
+  {
+    action: {
+      type: String,
+      required: [true, "Action is required"],
+      index: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    userEmail: {
+      type: String,
+    },
+    targetType: {
+      type: String,
+      enum: {
+        values: ["post", "comment", "user", "auth", "system"],
+        message: "Invalid target type",
+      },
+      required: [true, "Target type is required"],
+    },
+    targetId: {
+      type: String,
+    },
+    details: {
+      type: String,
+      default: "",
+    },
+    ipAddress: {
+      type: String,
+      default: "",
+    },
+  },
+  {
+    timestamps: { createdAt: true, updatedAt: false },
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
+);
+
+activityLogSchema.index({ createdAt: -1 });
+
+export const ActivityLog =
+  mongoose.models.ActivityLog ||
+  mongoose.model<IActivityLogDocument>("ActivityLog", activityLogSchema);
+export default ActivityLog;
+
+// Standalone functions replacing ActivityLogModel class
+export async function logActivityDoc(data: {
+  action: string;
+  userId?: any;
+  userEmail?: string;
+  targetType: "post" | "comment" | "user" | "auth" | "system";
+  targetId?: string;
+  details: string;
+  ipAddress?: string;
+  _id?: any;
+}): Promise<any> {
+  const logPayload: Record<string, any> = {
+    action: data.action,
+    userId:
+      data.userId && mongoose.isValidObjectId(data.userId)
+        ? data.userId
+        : undefined,
+    userEmail: data.userEmail,
+    targetType: data.targetType,
+    targetId: data.targetId,
+    details: data.details,
+    ipAddress: data.ipAddress,
+  };
+
+  if (data._id) {
+    logPayload._id = data._id;
+  }
+
+  const newLog = await ActivityLog.create(logPayload);
+  return newLog.toObject();
+}
+
+export async function findLatestActivityLogs(limit = 50): Promise<any[]> {
+  return ActivityLog.find().sort({ createdAt: -1 }).limit(limit).lean();
+}
+
+// Plain function dictionary for backward compatibility (no class)
+export const ActivityLogModel = {
+  log: logActivityDoc,
+  findLatest: findLatestActivityLogs,
+  findRecent: findLatestActivityLogs,
+};

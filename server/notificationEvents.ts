@@ -11,24 +11,22 @@ export interface INotification {
   read: boolean;
 }
 
-class NotificationCenter extends EventEmitter {
-  private clients: Map<string, Response> = new Map();
-  private notificationHistory: INotification[] = [];
+export function createNotificationCenter() {
+  const emitter = new EventEmitter();
+  emitter.setMaxListeners(50);
 
-  constructor() {
-    super();
-    this.setMaxListeners(50);
+  const clients = new Map<string, Response>();
+  let notificationHistory: INotification[] = [];
+
+  function addClient(id: string, res: Response) {
+    clients.set(id, res);
   }
 
-  addClient(id: string, res: Response) {
-    this.clients.set(id, res);
+  function removeClient(id: string) {
+    clients.delete(id);
   }
 
-  removeClient(id: string) {
-    this.clients.delete(id);
-  }
-
-  broadcast(notification: Omit<INotification, 'id' | 'createdAt' | 'read'>) {
+  function broadcast(notification: Omit<INotification, 'id' | 'createdAt' | 'read'>) {
     const fullNotification: INotification = {
       id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       ...notification,
@@ -36,27 +34,35 @@ class NotificationCenter extends EventEmitter {
       read: false,
     };
 
-    this.notificationHistory.unshift(fullNotification);
-    if (this.notificationHistory.length > 50) {
-      this.notificationHistory = this.notificationHistory.slice(0, 50);
+    notificationHistory.unshift(fullNotification);
+    if (notificationHistory.length > 50) {
+      notificationHistory = notificationHistory.slice(0, 50);
     }
 
     const payload = `data: ${JSON.stringify(fullNotification)}\n\n`;
 
-    for (const [_, clientRes] of this.clients.entries()) {
+    for (const [_, clientRes] of clients.entries()) {
       try {
         clientRes.write(payload);
       } catch (err) {
-        // Client might have disconnected
+        // Client disconnected
       }
     }
 
     return fullNotification;
   }
 
-  getRecentNotifications(limit = 20): INotification[] {
-    return this.notificationHistory.slice(0, limit);
+  function getRecentNotifications(limit = 20): INotification[] {
+    return notificationHistory.slice(0, limit);
   }
+
+  return {
+    emitter,
+    addClient,
+    removeClient,
+    broadcast,
+    getRecentNotifications,
+  };
 }
 
-export const notificationCenter = new NotificationCenter();
+export const notificationCenter = createNotificationCenter();

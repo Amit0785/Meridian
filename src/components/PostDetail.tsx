@@ -210,9 +210,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({
 
       {/* Zero-Pill Header Metadata */}
       <div className="flex items-center gap-2 text-xs text-slate-500 mb-4">
-        <span className="font-semibold text-slate-900">{post.category}</span>
-        <span aria-hidden="true" className="text-slate-300">·</span>
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 font-semibold text-slate-700">
           <Clock className="w-3.5 h-3.5" />
           <span>{readTimeMin} min read</span>
         </span>

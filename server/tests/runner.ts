@@ -1,12 +1,13 @@
 import { TestRunnerService } from '../Services/testRunnerService';
+import { disconnectDB } from '../config/database';
 
 async function main() {
   console.log('\n\x1b[1m\x1b[36m RUNS \x1b[0m Running Jest MERN Test Suite (Unit & Integration)...\n');
   const report = await TestRunnerService.runFullSuite();
 
-  // Group by category/component
-  const unitTests = report.results.filter(r => r.category === 'Unit');
-  const integrationTests = report.results.filter(r => r.category === 'Integration');
+  // Group by test type
+  const unitTests = report.results.filter(r => r.testType === 'Unit');
+  const integrationTests = report.results.filter(r => r.testType === 'Integration');
 
   console.log('\x1b[1m\x1b[42m\x1b[30m PASS \x1b[0m \x1b[1mserver/tests/unit.test.ts\x1b[0m');
   for (const t of unitTests) {
@@ -34,12 +35,17 @@ async function main() {
   console.log(`\x1b[1mTime:\x1b[0m        ${(report.durationMs / 1000).toFixed(2)}s`);
   console.log('\x1b[90mRan all test suites with 100% assertion pass rate.\x1b[0m\n');
 
+  await disconnectDB();
+
   if (report.failedCount > 0) {
     process.exit(1);
+  } else {
+    process.exit(0);
   }
 }
 
-main().catch(err => {
+main().catch(async err => {
   console.error('Test execution failed:', err);
+  await disconnectDB();
   process.exit(1);
 });

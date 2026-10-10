@@ -14,7 +14,6 @@ import {
 import {
   setSelectedPost,
   setEditingPost,
-  setSelectedCategory,
   createPostThunk,
   updatePostThunk,
   softDeletePostThunk,
@@ -54,7 +53,7 @@ function MainApp() {
   } = useAppSelector((state) => state.ui);
 
   // Redux Posts State
-  const { selectedPost, editingPost, selectedCategory } = useAppSelector((state) => state.posts);
+  const { selectedPost, editingPost } = useAppSelector((state) => state.posts);
 
   const handleSelectPost = async (post: Post) => {
     try {
@@ -131,8 +130,6 @@ function MainApp() {
         onOpenTestRunner={() => dispatch(setTestRunnerOpen(true))}
         onOpenNotifications={() => dispatch(setNotificationsOpen(true))}
         onOpenDemoGuide={() => dispatch(setDemoGuideOpen(true))}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={(cat) => dispatch(setSelectedCategory(cat))}
       />
 
       {/* Main Viewport Content */}
@@ -198,8 +195,6 @@ function MainApp() {
                 dispatch(setNewPostOpen(true));
               }
             }}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={(cat) => dispatch(setSelectedCategory(cat))}
           />
         )}
       </main>

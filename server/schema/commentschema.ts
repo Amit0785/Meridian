@@ -1,114 +1,165 @@
-import { dbStore, ICommentDoc } from '../config/database';
-import { UserModel } from './userschema';
+import mongoose from "mongoose";
+import { ICommentProps } from "../utils/types";
+import { sanitizeUser } from "./userschema";
 
-export class CommentModel {
-  static async findById(id: string): Promise<ICommentDoc | null> {
-    const comment = dbStore.comments.find(c => c._id === id && !c.isDeleted);
-    return comment ? { ...comment } : null;
+const commentSchema = new mongoose.Schema<ICommentProps>(
+  {
+    postId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      required: [true, "Post ID is required"],
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "Author is required"],
+    },
+    content: {
+      type: String,
+      required: [true, "Comment content is required"],
+      trim: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
+);
+
+commentSchema.index({ postId: 1, createdAt: 1 });
+commentSchema.index({ author: 1 });
+commentSchema.index({ isDeleted: 1 });
+
+export const Comment =
+  mongoose.models.Comment ||
+  mongoose.model<ICommentProps>("Comment", commentSchema);
+export default Comment;
+
+// Standalone functions replacing CommentModel class
+export async function findCommentById(id: string): Promise<any | null> {
+  if (!id || !mongoose.isValidObjectId(id)) {
+    return null;
   }
-
-  static async findForPost(postId: string) {
-    const comments = dbStore.comments.filter(c => c.postId === postId && !c.isDeleted);
-    
-    // Sort chronological: oldest to newest
-    comments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-
-    // Populate Author references
-    const populated = await Promise.all(
-      comments.map(async comment => {
-        const author = await UserModel.findById(comment.author);
-        return {
-          ...comment,
-          author: author ? UserModel.sanitize(author) : { _id: comment.author, name: 'Anonymous', email: '' },
-        };
-      })
-    );
-
-    return populated;
-  }
-
-  static async create(data: {
-    postId: string;
-    author: string;
-    content: string;
-  }): Promise<any> {
-    const newComment: ICommentDoc = {
-      _id: `comm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      postId: data.postId,
-      author: data.author,
-      content: data.content,
-      isDeleted: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    dbStore.comments.push(newComment);
-    const author = await UserModel.findById(data.author);
-    return {
-      ...newComment,
-      author: author ? UserModel.sanitize(author) : { _id: data.author, name: 'Anonymous', email: '' },
-    };
-  }
-
-  static async findByIdAndUpdate(id: string, updates: Partial<ICommentDoc>): Promise<any | null> {
-    const index = dbStore.comments.findIndex(c => c._id === id);
-    if (index === -1) return null;
-
-    dbStore.comments[index] = {
-      ...dbStore.comments[index],
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
-
-    const author = await UserModel.findById(dbStore.comments[index].author);
-    return {
-      ...dbStore.comments[index],
-      author: author ? UserModel.sanitize(author) : { _id: dbStore.comments[index].author, name: 'Anonymous', email: '' },
-    };
-  }
-
-  static async findByIdAndDelete(id: string): Promise<boolean> {
-    const index = dbStore.comments.findIndex(c => c._id === id);
-    if (index === -1) return false;
-
-    dbStore.comments.splice(index, 1);
-    return true;
-  }
-
-  static async findAllPopulated(limit = 50) {
-    const list = [...dbStore.comments].slice(-limit).reverse();
-    return Promise.all(
-      list.map(async c => {
-        const author = await UserModel.findById(c.author);
-        const post = dbStore.posts.find(p => p._id === c.postId);
-        return {
-          ...c,
-          author: author ? UserModel.sanitize(author) : { _id: c.author, name: 'Anonymous', email: '' },
-          postTitle: post?.title || 'Unknown Post',
-          postSlug: post?.slug || '',
-        };
-      })
-    );
-  }
-
-  static async countDocuments(filter: { isDeleted?: boolean } = {}): Promise<number> {
-    return dbStore.comments.filter(c => {
-      if (filter.isDeleted !== undefined && c.isDeleted !== filter.isDeleted) return false;
-      return true;
-    }).length;
-  }
+  return Comment.findOne({ _id: id, isDeleted: false })
+    .populate("author", "name email avatar userRole role")
+    .lean();
 }
 
-export const CommentSchema = CommentModel;
+export async function findCommentsForPost(postId: string) {
+  if (!postId || !mongoose.isValidObjectId(postId)) {
+    return [];
+  }
+  const comments = await Comment.find({ postId, isDeleted: false })
+    .sort({ createdAt: 1 })
+    .populate("author", "name email avatar userRole role")
+    .lean();
 
-/**
- * Mongoose Schema Indexes definition for query optimization:
- * - postId & createdAt: compound index for rapid retrieval of post discussion threads
- * - author: index for user activity moderation
- * - isDeleted: index for soft-delete filtering
- */
-export const CommentMongooseIndexes = [
-  { fields: { postId: 1, createdAt: -1 } },
-  { fields: { author: 1 } },
-  { fields: { isDeleted: 1 } },
-];
+  return comments.map((c) => ({
+    ...c,
+    author: c.author
+      ? sanitizeUser(c.author)
+      : { _id: c.author, name: "Anonymous", email: "" },
+  }));
+}
+
+export async function createCommentDoc(data: {
+  postId: string;
+  author: string;
+  content: string;
+  _id?: any;
+}): Promise<any> {
+  const commentPayload: Record<string, any> = {
+    postId: data.postId,
+    author: data.author,
+    content: data.content,
+    isDeleted: false,
+  };
+
+  if (data._id) {
+    commentPayload._id = data._id;
+  }
+
+  const created = await Comment.create(commentPayload);
+
+  const populated = await Comment.findById(created._id)
+    .populate("author", "name email avatar userRole role")
+    .lean();
+
+  return {
+    ...populated,
+    author: populated?.author
+      ? sanitizeUser(populated.author)
+      : { _id: data.author, name: "Anonymous", email: "" },
+  };
+}
+
+export async function updateCommentById(
+  id: string,
+  updates: Partial<ICommentProps>,
+): Promise<any | null> {
+  if (!id || !mongoose.isValidObjectId(id)) {
+    return null;
+  }
+  const updated = await Comment.findByIdAndUpdate(id, updates, {
+    returnDocument: "after",
+  })
+    .populate("author", "name email avatar userRole role")
+    .lean();
+
+  if (!updated) return null;
+
+  return {
+    ...updated,
+    author: updated.author
+      ? sanitizeUser(updated.author)
+      : { _id: updated.author, name: "Anonymous", email: "" },
+  };
+}
+
+export async function deleteCommentById(id: string): Promise<boolean> {
+  if (!id || !mongoose.isValidObjectId(id)) {
+    return false;
+  }
+  const result = await Comment.findByIdAndDelete(id);
+  return !!result;
+}
+
+export async function findAllCommentsPopulated(limit = 50) {
+  const comments = await Comment.find()
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .populate("author", "name email avatar userRole role")
+    .populate("postId", "title slug")
+    .lean();
+
+  return comments.map((c: any) => ({
+    ...c,
+    author: c.author
+      ? sanitizeUser(c.author)
+      : { _id: c.author, name: "Anonymous", email: "" },
+    postTitle: c.postId?.title || "Unknown Post",
+    postSlug: c.postId?.slug || "",
+  }));
+}
+
+export async function countComments(
+  filter: Record<string, any> = {},
+): Promise<number> {
+  return Comment.countDocuments(filter);
+}
+
+// Plain function dictionary for backward compatibility (no class)
+export const CommentModel = {
+  findById: findCommentById,
+  findForPost: findCommentsForPost,
+  create: createCommentDoc,
+  findByIdAndUpdate: updateCommentById,
+  findByIdAndDelete: deleteCommentById,
+  findAllPopulated: findAllCommentsPopulated,
+  countDocuments: countComments,
+};

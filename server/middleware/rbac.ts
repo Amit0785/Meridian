@@ -15,12 +15,13 @@ export const requireRole = (...roles: ('admin' | 'user')[]) => {
       return;
     }
 
-    if (!roles.includes(req.user.role)) {
+    const role = req.user.userRole || req.user.role;
+    if (!roles.includes(role as any)) {
       res.status(403).json({
         success: false,
         statusCode: 403,
-        message: `Forbidden: Access restricted to roles [${roles.join(', ')}]. Current role: '${req.user.role}'`,
-        error: { code: 'FORBIDDEN_ROLE', requiredRoles: roles, currentRole: req.user.role },
+        message: `Forbidden: Access restricted to roles [${roles.join(', ')}]. Current role: '${role}'`,
+        error: { code: 'FORBIDDEN_ROLE', requiredRoles: roles, currentRole: role },
       });
       return;
     }
@@ -58,8 +59,10 @@ export const checkPostOwnershipOrAdmin = async (
       return;
     }
 
-    const isAdmin = req.user.role === 'admin';
-    const isOwner = post.author === req.user._id;
+    const role = req.user.userRole || req.user.role;
+    const isAdmin = role === 'admin';
+    const authorId = typeof post.author === 'object' ? post.author._id : post.author;
+    const isOwner = authorId === req.user._id;
 
     if (!isAdmin && !isOwner) {
       res.status(403).json({
@@ -112,8 +115,10 @@ export const checkCommentOwnershipOrAdmin = async (
       return;
     }
 
-    const isAdmin = req.user.role === 'admin';
-    const isOwner = comment.author === req.user._id;
+    const role = req.user.userRole || req.user.role;
+    const isAdmin = role === 'admin';
+    const authorId = typeof comment.author === 'object' ? comment.author._id : comment.author;
+    const isOwner = authorId === req.user._id;
 
     if (!isAdmin && !isOwner) {
       res.status(403).json({

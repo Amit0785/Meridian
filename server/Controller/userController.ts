@@ -3,9 +3,12 @@ import bcrypt from "bcryptjs";
 import { userModel } from "../schema/userschema";
 import {
   AuthService,
-  generateToken,
-  generateRefreshToken,
+  registerUser as registerUserService,
+  loginUser as loginUserService,
+  refreshUserTokens,
+  socialLoginUser,
 } from "../Services/authService";
+import { generateToken, generateRefreshToken } from "../utils/jwt";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { notificationCenter } from "../notificationEvents";
 import { catchAsync } from "../utils/catchAsync";
@@ -85,8 +88,6 @@ export const loginUser = catchAsync(async (req: Request, res: Response) => {
   const accessToken = generateToken({
     _id: user._id.toString(),
     email: user.email,
-    role: user.role,
-    name: user.name,
   });
   const refreshToken = generateRefreshToken({
     _id: user._id.toString(),
