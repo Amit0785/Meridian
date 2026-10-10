@@ -14,6 +14,7 @@
 ---
 
 ## Table of Contents
+
 1. [Requirements Compliance Matrix](#1-requirements-compliance-matrix)
 2. [Clean Architecture & Folder Structure](#2-clean-architecture--folder-structure)
 3. [Feature Explanations](#3-feature-explanations)
@@ -42,21 +43,21 @@
 
 ## 1. Requirements Compliance Matrix
 
-| Requirement from Specification | Status | Implementation Details & Location |
-|---|:---:|---|
-| **MERN Stack Foundation** | Complete | MongoDB with Mongoose ODM, Express.js 4, React.js 19 with Redux Toolkit, Node.js 22. |
-| **1. User Authentication** | Complete | Register, login, logout, bcrypt password hashing (10 salt rounds), JWT access (15m) & refresh (7d) tokens, sliding-window rate limiting, Google & Facebook OAuth 2.0 SSO, Formik + Zod client validation. |
-| **2. Roles & Permissions (RBAC)** | Complete | `admin` and `user` roles enforced at API middleware level (`requireRole`, `checkPostOwnershipOrAdmin`, `checkCommentOwnershipOrAdmin`). |
-| **3. Post Management** | Complete | Full CRUD with Title, Content, Author reference, Timestamps; automatic URL-friendly slug generation with collision handling; Zod payload validation; soft deletes (`isDeleted`, `deletedAt`). |
-| **4. Comments** | Complete | Full CRUD; author-only edit/delete; universal admin moderation; Mongoose post-comment relational referencing with populated authors. |
-| **5. Admin Panel** | Complete | Dedicated React UI restricted by RBAC middleware; displays total users, total posts, total comments, total views; modular components; user management table; trash bin; comment moderation. |
-| **6. Advanced Routing** | Complete | Modular Express Routers (`/api/v1/auth`, `/posts`, `/comments`, `/admin`, `/notifications`); centralized JSON error envelope (`success`, `statusCode`, `message`, `data`, `error`). |
-| **7. Middleware** | Complete | Reusable & modular: `activityLogger` (logs to MongoDB), `auth` (JWT verification), `rbac` (roles & ownership), `rateLimiter`, `validation` (Zod), `errorHandler`. |
-| **8. Services & Architecture** | Complete | Clean architecture with separated layers: Routes → Controllers (`catchAsync`) → Services (business logic) → Schemas/Models (database). |
-| **9. Performance Optimization** | Complete | Database indexing on `email`, `slug`, `author`, `isDeleted`, `postId`, `createdAt`; lean projections (`.lean()`); server-side pagination; selective field population. |
-| **10. Testing** | Complete | 10 unit and integration tests with Jest assertion semantics; runnable via CLI (`npm run test`) and interactive in-app Test Modal (`/api/v1/tests/run`). |
-| **Frontend Requirements** | Complete | Functional React components & hooks; centralized Redux Toolkit state (`auth`, `posts`, `admin`, `notifications`, `ui`); Formik + Zod forms; protected routes. |
-| **Bonus Feature** | Complete | Real-time event notifications stream via Server-Sent Events (SSE) broadcasting post creation, comments, and trash actions. |
+| Requirement from Specification    |  Status  | Implementation Details & Location                                                                                                                                                                         |
+| --------------------------------- | :------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MERN Stack Foundation**         | Complete | MongoDB with Mongoose ODM, Express.js 4, React.js 19 with Redux Toolkit, Node.js 22.                                                                                                                      |
+| **1. User Authentication**        | Complete | Register, login, logout, bcrypt password hashing (10 salt rounds), JWT access (15m) & refresh (7d) tokens, sliding-window rate limiting, Google & Facebook OAuth 2.0 SSO, Formik + Zod client validation. |
+| **2. Roles & Permissions (RBAC)** | Complete | `admin` and `user` roles enforced at API middleware level (`requireRole`, `checkPostOwnershipOrAdmin`, `checkCommentOwnershipOrAdmin`).                                                                   |
+| **3. Post Management**            | Complete | Full CRUD with Title, Content, Author reference, Timestamps; automatic URL-friendly slug generation with collision handling; Zod payload validation; soft deletes (`isDeleted`, `deletedAt`).             |
+| **4. Comments**                   | Complete | Full CRUD; author-only edit/delete; universal admin moderation; Mongoose post-comment relational referencing with populated authors.                                                                      |
+| **5. Admin Panel**                | Complete | Dedicated React UI restricted by RBAC middleware; displays total users, total posts, total comments, total views; modular components; user management table; trash bin; comment moderation.               |
+| **6. Advanced Routing**           | Complete | Modular Express Routers (`/api/v1/auth`, `/posts`, `/comments`, `/admin`, `/notifications`); centralized JSON error envelope (`success`, `statusCode`, `message`, `data`, `error`).                       |
+| **7. Middleware**                 | Complete | Reusable & modular: `activityLogger` (logs to MongoDB), `auth` (JWT verification), `rbac` (roles & ownership), `rateLimiter`, `validation` (Zod), `errorHandler`.                                         |
+| **8. Services & Architecture**    | Complete | Clean architecture with separated layers: Routes → Controllers (`catchAsync`) → Services (business logic) → Schemas/Models (database).                                                                    |
+| **9. Performance Optimization**   | Complete | Database indexing on `email`, `slug`, `author`, `isDeleted`, `postId`, `createdAt`; lean projections (`.lean()`); server-side pagination; selective field population.                                     |
+| **10. Testing**                   | Complete | 10 unit and integration tests with Jest assertion semantics; runnable via CLI (`npm run test`) and interactive in-app Test Modal (`/api/v1/tests/run`).                                                   |
+| **Frontend Requirements**         | Complete | Functional React components & hooks; centralized Redux Toolkit state (`auth`, `posts`, `admin`, `notifications`, `ui`); Formik + Zod forms; protected routes.                                             |
+| **Bonus Feature**                 | Complete | Real-time event notifications stream via Server-Sent Events (SSE) broadcasting post creation, comments, and trash actions.                                                                                |
 
 ---
 
@@ -106,6 +107,7 @@ Meridian follows a **Clean Multi-Layer Architecture** strictly decoupling HTTP c
 ```
 
 ### Complete Repository Tree
+
 ```
 meridian/
 ├── index.html                           # Single page HTML entry point
@@ -208,6 +210,7 @@ meridian/
 ## 3. Feature Explanations
 
 ### 1. User Authentication & Security
+
 - **Bcrypt Password Hashing**: Passwords are encrypted before persisting to MongoDB using `bcryptjs` with 10 salt rounds in a Mongoose `pre('save')` hook.
 - **Dual JWT Token Architecture**:
   - **Access Token**: Short-lived (15 minutes), containing user identity (`userId`, `email`, `role`, `name`). Signed via `JWT_ACCESS_SECRET`.
@@ -224,6 +227,7 @@ meridian/
 ---
 
 ### 2. User Roles & Permissions (RBAC)
+
 - **Role Hierarchy**: Two distinct user roles: `admin` and `user`.
 - **API-Level Enforcement**: Protection is enforced on the server through dedicated middleware functions:
   - `requireRole('admin')`: Restricts administrative routes to users with `admin` credentials.
@@ -234,6 +238,7 @@ meridian/
 ---
 
 ### 3. Post Management, Slugs & Soft Deletes
+
 - **CRUD Operations**: Complete create, read, update, and delete lifecycle for articles.
 - **Compliant Post Model**:
   - `title`: Post title (validated 5–150 characters).
@@ -252,6 +257,7 @@ meridian/
 ---
 
 ### 4. Relational Comments
+
 - **Mongoose Relational References**: Comments store a direct reference to the parent `postId` (`ref: 'Post'`) and the author's `userId` (`ref: 'User'`).
 - **Data Population**: Author details (`name`, `email`, `avatar`, `userRole`) are automatically populated using `.populate('author', 'name email avatar userRole role')`.
 - **Redux Centralization**: `CommentSection.tsx` dispatches `fetchComments(postId)`, `addComment`, `updateComment`, and `removeComment` from `postsSlice`, keeping comments fully reactive and centralized.
@@ -259,6 +265,7 @@ meridian/
 ---
 
 ### 5. Dedicated Modular Admin Panel
+
 - **React-Based Admin Console (`AdminDashboard.tsx`)**: Built as a composition of dedicated sub-components in `src/components/admin/`:
   - **`AdminStatsCards`**: Displays live platform metrics for **Total Users**, **Total Posts** (Active vs Soft-Deleted), **Total Comments**, and **Total Post Views**.
   - **`AdminTabNav`**: Tab bar with live badge counts for Audit Logs, Users, Trash, and Comments.
@@ -271,6 +278,7 @@ meridian/
 ---
 
 ### 6. Advanced Routing & RESTful Standards
+
 - **Express Routers**: Routes are logically divided into versioned modules under `/api/v1`:
   - `/api/v1/auth` & `/api/v1/user`
   - `/api/v1/posts`
@@ -301,6 +309,7 @@ meridian/
 ---
 
 ### 7. Reusable Custom Middleware
+
 1. **`activityLogger.ts`**: Intercepts mutating requests (POST, PUT, PATCH, DELETE) and records user activity to MongoDB (`ActivityLog` collection), capturing action, target resource, user ID, email, details, and client IP.
 2. **`auth.ts`**: Extracts Bearer token from the `Authorization` header, verifies the JWT access token, and attaches the user payload to `req.user`.
 3. **`rbac.ts`**: Enforces role requirements (`requireRole('admin')`) and resource ownership (`checkPostOwnershipOrAdmin`, `checkCommentOwnershipOrAdmin`).
@@ -311,7 +320,9 @@ meridian/
 ---
 
 ### 8. Service Layer Architecture
+
 Meridian strictly separates transport logic (Controllers) from business logic (Services):
+
 - **`authService.ts`**: User registration, bcrypt hashing, credential verification, JWT issuance, token refresh, and OAuth handling.
 - **`userService.ts`**: User directory retrieval, role updates, account suspension, and platform statistics calculation.
 - **`postService.ts`**: Post querying, pagination, slug generation, soft deletion, restoration, and database purge.
@@ -322,6 +333,7 @@ Meridian strictly separates transport logic (Controllers) from business logic (S
 ---
 
 ### 9. Performance Optimization & Indexing
+
 - **MongoDB Indexing**:
   - `User`: Index on `email` (unique).
   - `Post`: Compound indexes on `{ author: 1, createdAt: -1 }` and `{ isDeleted: 1, createdAt: -1 }`. Unique index on `slug`.
@@ -334,7 +346,9 @@ Meridian strictly separates transport logic (Controllers) from business logic (S
 ---
 
 ### 10. Testing Suite (Unit & Integration)
+
 Meridian includes 10 automated unit and integration tests executing against MongoDB:
+
 1. **Bcrypt Password Hashing & Registration** (Unit): Verifies salt generation and hashed storage.
 2. **JWT Token Issuance & Verification** (Integration): Validates access and refresh tokens.
 3. **URL Slug Generation & Sanitization** (Unit): Tests kebab-case conversion, special character removal, and collision deduplication.
@@ -347,15 +361,18 @@ Meridian includes 10 automated unit and integration tests executing against Mong
 10. **Performance Optimization: Pagination & Lean Projections** (Integration): Validates pagination metadata and lean execution.
 
 **How to run tests:**
+
 ```bash
 yarn test
 # or: npm run test
 ```
+
 Or click the **"Test Suite"** button in the app header/footer to run tests interactively inside the browser!
 
 ---
 
 ### Frontend Architecture (React 19 & Redux Toolkit)
+
 - **React 19**: Built with functional components and modern React hooks (`useState`, `useEffect`, `useCallback`, `useMemo`).
 - **Centralized Redux Toolkit (`@reduxjs/toolkit`)**:
   - **`authSlice`**: Stores user session, tokens, login/register/logout thunks.
@@ -369,7 +386,9 @@ Or click the **"Test Suite"** button in the app header/footer to run tests inter
 ---
 
 ### Bonus: Real-Time Event Notifications
+
 Meridian includes a real-time event broadcasting mechanism via **Server-Sent Events (SSE)** at `/api/v1/notifications/stream`.
+
 - **Live Stream Events**:
   - `POST_CREATED`: Dispatched when any author publishes a story.
   - `COMMENT_ADDED`: Dispatched when a comment is posted.
@@ -409,10 +428,12 @@ RATE_LIMIT_MAX_REQUESTS=100
 ## 5. Installation & Execution Guide
 
 ### Prerequisites
+
 - Node.js (v18 or higher recommended)
 - Yarn or npm (v9 or higher)
 
 ### 1. Install Dependencies
+
 ```bash
 yarn
 ```
@@ -421,11 +442,11 @@ yarn
 
 Meridian provides **3 distinct methods** to run the development environment, tailored to different developer workflows:
 
-| Method | Command | Script in `package.json` | Port / URL | Primary Purpose |
-|---|---|---|---|---|
-| **Method 1: Full-Stack Integrated** *(Recommended)* | `yarn dev`<br>`npm run dev` | `nodemon --watch server --watch server.ts --ext ts,json --exec tsx server.ts` | `http://localhost:3000` | Full-stack development with automatic backend reload & frontend HMR served on a single unified port. |
-| **Method 2: Client-Only** | `yarn dev:client`<br>`npm run dev:client` | `vite` | `http://localhost:5173` | Ultra-fast standalone Vite dev server. Ideal for rapid UI styling, component prototyping, and CSS tweaking. |
-| **Method 3: Concurrent Full-Stack** | `yarn dev:full`<br>`npm run dev:full` | `concurrently "yarn dev" "yarn dev:client"` | `http://localhost:3000`<br>`http://localhost:5173` | Runs both the backend watcher and standalone Vite server simultaneously in a single terminal with colored logs. |
+| Method                                              | Command                                   | Script in `package.json`                                                      | Port / URL                                         | Primary Purpose                                                                                                 |
+| --------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Method 1: Full-Stack Integrated** _(Recommended)_ | `yarn dev`<br>`npm run dev`               | `nodemon --watch server --watch server.ts --ext ts,json --exec tsx server.ts` | `http://localhost:3000`                            | Full-stack development with automatic backend reload & frontend HMR served on a single unified port.            |
+| **Method 2: Client-Only**                           | `yarn dev:client`<br>`npm run dev:client` | `vite`                                                                        | `http://localhost:5173`                            | Ultra-fast standalone Vite dev server. Ideal for rapid UI styling, component prototyping, and CSS tweaking.     |
+| **Method 3: Concurrent Full-Stack**                 | `yarn dev:full`<br>`npm run dev:full`     | `concurrently "yarn dev" "yarn dev:client"`                                   | `http://localhost:3000`<br>`http://localhost:5173` | Runs both the backend watcher and standalone Vite server simultaneously in a single terminal with colored logs. |
 
 ---
 
@@ -483,11 +504,13 @@ yarn dev:full
 - **Best For**: Workflows where you want an independent standalone Vite dev server running on port `5173` while concurrently maintaining active backend Nodemon watchers on port `3000`.
 
 ### 3. Run Automated Tests
+
 ```bash
 yarn test
 ```
 
 ### 4. Build for Production
+
 ```bash
 yarn build
 yarn start
@@ -508,6 +531,7 @@ Meridian includes built-in interactive **Swagger OpenAPI 3.0** documentation:
 - **In-App Explorer**: Click **"API Docs"** in the navigation bar or footer to open the embedded modal.
 
 ### Authorizing in Swagger UI
+
 1. Run `POST /api/v1/auth/login` with `admin@meridian.dev` / `admin123`.
 2. Copy the returned `accessToken`.
 3. Click the green **"Authorize"** button in Swagger UI and input `Bearer <your_token>`.
@@ -516,77 +540,40 @@ Meridian includes built-in interactive **Swagger OpenAPI 3.0** documentation:
 
 ## 7. API Endpoints Reference
 
-| Method | Endpoint | Description | Access Level |
-|---|---|---|---|
-| `GET` | `/api-docs` | Interactive Swagger UI Documentation | Public |
-| `GET` | `/api-docs-json` | OpenAPI 3.0 JSON Specification | Public |
-| `POST` | `/api/v1/auth/register` | Register new user with bcrypt hashing | Public (Rate-Limited) |
-| `POST` | `/api/v1/auth/login` | Login user, issue Access & Refresh JWTs | Public (Rate-Limited) |
-| `POST` | `/api/v1/auth/refresh` | Exchange refresh token for fresh access token | Public |
-| `POST` | `/api/v1/auth/social-login` | Google / Facebook OAuth single sign-on | Public |
-| `GET` | `/api/v1/auth/me` | Retrieve profile of authenticated user | Authenticated |
-| `GET` | `/api/v1/posts` | List posts (supports pagination, search, tags) | Public |
-| `GET` | `/api/v1/posts/taxonomy` | List active taxonomy tags | Public |
-| `GET` | `/api/v1/posts/:slugOrId`| Retrieve single post by slug or ID | Public |
-| `POST` | `/api/v1/posts` | Create new post with automated slug | Authenticated |
-| `PUT` | `/api/v1/posts/:id` | Update post content | Owner or Admin |
-| `DELETE` | `/api/v1/posts/:id` | Soft delete post (`isDeleted: true`) | Owner or Admin |
-| `PATCH` | `/api/v1/posts/:id/restore` | Restore soft-deleted post to feed | Owner or Admin |
-| `DELETE` | `/api/v1/posts/:id/permanent` | Permanently purge post and comments | Admin Only |
-| `GET` | `/api/v1/comments/post/:postId` | Get all comments for a post | Public |
-| `POST` | `/api/v1/comments/post/:postId` | Add a comment to a post | Authenticated |
-| `PUT` | `/api/v1/comments/:commentId` | Edit comment content | Author or Admin |
-| `DELETE` | `/api/v1/comments/:commentId` | Delete a comment | Author or Admin |
-| `GET` | `/api/v1/comments/all` | Retrieve all comments for moderation | Admin Only |
-| `GET` | `/api/v1/admin/stats` | Platform statistics (users, posts, comments) | Admin Only |
-| `GET` | `/api/v1/admin/users` | User directory with post/comment counts | Admin Only |
-| `PATCH` | `/api/v1/admin/users/:id/role` | Toggle user role (`admin` / `user`) | Admin Only |
-| `PATCH` | `/api/v1/admin/users/:id/status`| Toggle user status (`active` / `suspended`) | Admin Only |
-| `DELETE` | `/api/v1/admin/users/:id` | Delete user and archive their posts | Admin Only |
-| `GET` | `/api/v1/admin/trash-posts` | List soft-deleted posts in trash | Admin Only |
-| `GET` | `/api/v1/admin/activity-logs` | Retrieve operational audit logs | Admin Only |
-| `GET` | `/api/v1/notifications/stream` | Server-Sent Events (SSE) notification stream | Public |
-| `POST` | `/api/v1/tests/run` | Execute unit and integration test suite | Public |
-
----
-
-## 8. Demo Video & Evaluation Walkthrough
-
-To record your **5–10 minute demonstration video**, follow this suggested presentation flow:
-
-1. **Introduction & Stack Overview (1 minute)**:
-   - Introduce Meridian as a full-stack MERN application.
-   - Mention key technologies: MongoDB (Mongoose ODM), Express.js, React 19, Node.js, Redux Toolkit, Tailwind CSS, Zod, and Formik.
-
-2. **Authentication & RBAC Evaluation (2 minutes)**:
-   - Open the **Auth Modal** to demonstrate client-side Formik + Zod validation with real-time error states.
-   - Use the **1-Click Demo Switcher** to log in as **Admin Eleanor Vance** (`admin@meridian.dev`).
-   - Switch to **Regular User Julian Chen** (`julian@meridian.dev`) and show that Julian can only edit his own publications.
-   - Switch to **Maya Patel** to demonstrate user data isolation.
-
-3. **Post Management, Slugs & Soft Deletes (2 minutes)**:
-   - Click **"Write Story"** and type an article title to demonstrate real-time slug preview generation.
-   - Publish the story and show that it appears on the live feed.
-   - Move an article to **Trash** to demonstrate soft-delete functionality (`isDeleted: true`).
-   - Switch to the **"My Stories"** page and show the **Trash Tab** where the article can be restored with 1 click.
-
-4. **Comments & Discussion (1.5 minutes)**:
-   - Open an article and add a technical comment.
-   - Demonstrate that regular users can only edit and delete their own comments.
-   - Demonstrate that Admin Eleanor can moderate and remove any comment.
-
-5. **Dedicated Admin Panel (2 minutes)**:
-   - Switch to **Admin Eleanor** and open the **Admin Control Console**.
-   - Review the **4 KPI Cards** (Total Users, Total Posts, Total Comments, Total Views).
-   - Show the **Audit Logs Tab** with live events captured by the `activityLogger` middleware.
-   - Show the **User Directory** and demonstrate toggling user roles (`Admin` / `User`) and suspending accounts.
-   - Show the **Trash Bin** and demonstrate restoring and permanently purging articles.
-
-6. **Automated Testing & API Docs (1 minute)**:
-   - Click **"Test Suite"** to run the 10 unit and integration tests live in the browser.
-   - Click **"API Docs"** to demonstrate the interactive Swagger UI OpenAPI 3.0 explorer.
+| Method   | Endpoint                         | Description                                    | Access Level          |
+| -------- | -------------------------------- | ---------------------------------------------- | --------------------- |
+| `GET`    | `/api-docs`                      | Interactive Swagger UI Documentation           | Public                |
+| `GET`    | `/api-docs-json`                 | OpenAPI 3.0 JSON Specification                 | Public                |
+| `POST`   | `/api/v1/auth/register`          | Register new user with bcrypt hashing          | Public (Rate-Limited) |
+| `POST`   | `/api/v1/auth/login`             | Login user, issue Access & Refresh JWTs        | Public (Rate-Limited) |
+| `POST`   | `/api/v1/auth/refresh`           | Exchange refresh token for fresh access token  | Public                |
+| `POST`   | `/api/v1/auth/social-login`      | Google / Facebook OAuth single sign-on         | Public                |
+| `GET`    | `/api/v1/auth/me`                | Retrieve profile of authenticated user         | Authenticated         |
+| `GET`    | `/api/v1/posts`                  | List posts (supports pagination, search, tags) | Public                |
+| `GET`    | `/api/v1/posts/taxonomy`         | List active taxonomy tags                      | Public                |
+| `GET`    | `/api/v1/posts/:slugOrId`        | Retrieve single post by slug or ID             | Public                |
+| `POST`   | `/api/v1/posts`                  | Create new post with automated slug            | Authenticated         |
+| `PUT`    | `/api/v1/posts/:id`              | Update post content                            | Owner or Admin        |
+| `DELETE` | `/api/v1/posts/:id`              | Soft delete post (`isDeleted: true`)           | Owner or Admin        |
+| `PATCH`  | `/api/v1/posts/:id/restore`      | Restore soft-deleted post to feed              | Owner or Admin        |
+| `DELETE` | `/api/v1/posts/:id/permanent`    | Permanently purge post and comments            | Admin Only            |
+| `GET`    | `/api/v1/comments/post/:postId`  | Get all comments for a post                    | Public                |
+| `POST`   | `/api/v1/comments/post/:postId`  | Add a comment to a post                        | Authenticated         |
+| `PUT`    | `/api/v1/comments/:commentId`    | Edit comment content                           | Author or Admin       |
+| `DELETE` | `/api/v1/comments/:commentId`    | Delete a comment                               | Author or Admin       |
+| `GET`    | `/api/v1/comments/all`           | Retrieve all comments for moderation           | Admin Only            |
+| `GET`    | `/api/v1/admin/stats`            | Platform statistics (users, posts, comments)   | Admin Only            |
+| `GET`    | `/api/v1/admin/users`            | User directory with post/comment counts        | Admin Only            |
+| `PATCH`  | `/api/v1/admin/users/:id/role`   | Toggle user role (`admin` / `user`)            | Admin Only            |
+| `PATCH`  | `/api/v1/admin/users/:id/status` | Toggle user status (`active` / `suspended`)    | Admin Only            |
+| `DELETE` | `/api/v1/admin/users/:id`        | Delete user and archive their posts            | Admin Only            |
+| `GET`    | `/api/v1/admin/trash-posts`      | List soft-deleted posts in trash               | Admin Only            |
+| `GET`    | `/api/v1/admin/activity-logs`    | Retrieve operational audit logs                | Admin Only            |
+| `GET`    | `/api/v1/notifications/stream`   | Server-Sent Events (SSE) notification stream   | Public                |
+| `POST`   | `/api/v1/tests/run`              | Execute unit and integration test suite        | Public                |
 
 ---
 
 ## License
+
 MIT License — Meridian Blog System.

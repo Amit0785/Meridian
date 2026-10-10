@@ -13,10 +13,8 @@ export interface AuthState {
   refreshToken: string | null;
 }
 
-const initialToken =
-  Storage.getItem("token") || Storage.getItem("meridian_access_token");
-const initialRefreshToken =
-  Storage.getItem("refresh-token") || Storage.getItem("meridian_refresh_token");
+const initialToken = Storage.getItem("token");
+const initialRefreshToken = Storage.getItem("refresh-token");
 
 const initialState: AuthState = {
   user: null,
@@ -32,8 +30,7 @@ export const fetchCurrentUser = createAsyncThunk(
   "auth/fetchCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
-      const token =
-        Storage.getItem("token") || Storage.getItem("meridian_access_token");
+      const token = Storage.getItem("token");
       if (!token) return null;
 
       const res = await instance.get(API.auth.me);
@@ -45,8 +42,6 @@ export const fetchCurrentUser = createAsyncThunk(
     } catch (err: any) {
       Storage.removeItem("token");
       Storage.removeItem("refresh-token");
-      Storage.removeItem("meridian_access_token");
-      Storage.removeItem("meridian_refresh_token");
       return rejectWithValue(
         err.response?.data?.message ||
           err.message ||
@@ -73,8 +68,6 @@ export const loginUser = createAsyncThunk(
         const { user, tokens } = data.data;
         Storage.setItem("token", tokens.accessToken);
         Storage.setItem("refresh-token", tokens.refreshToken);
-        Storage.setItem("meridian_access_token", tokens.accessToken);
-        Storage.setItem("meridian_refresh_token", tokens.refreshToken);
         return {
           user: user as User,
           token: tokens.accessToken as string,
@@ -109,8 +102,6 @@ export const registerUser = createAsyncThunk(
         const { user, tokens } = resData.data;
         Storage.setItem("token", tokens.accessToken);
         Storage.setItem("refresh-token", tokens.refreshToken);
-        Storage.setItem("meridian_access_token", tokens.accessToken);
-        Storage.setItem("meridian_refresh_token", tokens.refreshToken);
         return {
           user: user as User,
           token: tokens.accessToken as string,
@@ -139,8 +130,6 @@ export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
     }
     Storage.removeItem("token");
     Storage.removeItem("refresh-token");
-    Storage.removeItem("meridian_access_token");
-    Storage.removeItem("meridian_refresh_token");
   }
   return null;
 });
@@ -183,11 +172,9 @@ export const socialLoginUser = createAsyncThunk(
 
         if (accessToken) {
           Storage.setItem("token", accessToken);
-          Storage.setItem("meridian_access_token", accessToken);
         }
         if (refreshToken) {
           Storage.setItem("refresh-token", refreshToken);
-          Storage.setItem("meridian_refresh_token", refreshToken);
         }
 
         return {
@@ -238,12 +225,10 @@ export const authSlice = createSlice({
       if (action.payload.token) {
         state.token = action.payload.token;
         Storage.setItem("token", action.payload.token);
-        Storage.setItem("meridian_access_token", action.payload.token);
       }
       if (action.payload.refreshToken) {
         state.refreshToken = action.payload.refreshToken;
         Storage.setItem("refresh-token", action.payload.refreshToken);
-        Storage.setItem("meridian_refresh_token", action.payload.refreshToken);
       }
       state.isAuthenticated = !!state.token;
     },
@@ -262,8 +247,6 @@ export const authSlice = createSlice({
       state.error = null;
       Storage.removeItem("token");
       Storage.removeItem("refresh-token");
-      Storage.removeItem("meridian_access_token");
-      Storage.removeItem("meridian_refresh_token");
     },
   },
   extraReducers: (builder) => {
