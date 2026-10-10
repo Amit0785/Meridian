@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { User } from '../../types';
-import { instance, instance1, API, Storage } from '../../lib/api';
-import { auth as firebaseAuth, firebaseSignOut } from '../../lib/firebase';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { User } from "../../types";
+import { instance, instance1, API, Storage } from "../../lib/api";
+import { auth as firebaseAuth, firebaseSignOut } from "../../lib/firebase";
 
 export interface AuthState {
   user: User | null;
@@ -13,8 +13,10 @@ export interface AuthState {
   refreshToken: string | null;
 }
 
-const initialToken = Storage.getItem('token') || Storage.getItem('meridian_access_token');
-const initialRefreshToken = Storage.getItem('refresh-token') || Storage.getItem('meridian_refresh_token');
+const initialToken =
+  Storage.getItem("token") || Storage.getItem("meridian_access_token");
+const initialRefreshToken =
+  Storage.getItem("refresh-token") || Storage.getItem("meridian_refresh_token");
 
 const initialState: AuthState = {
   user: null,
@@ -27,81 +29,104 @@ const initialState: AuthState = {
 };
 
 export const fetchCurrentUser = createAsyncThunk(
-  'auth/fetchCurrentUser',
+  "auth/fetchCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
-      const token = Storage.getItem('token') || Storage.getItem('meridian_access_token');
+      const token =
+        Storage.getItem("token") || Storage.getItem("meridian_access_token");
       if (!token) return null;
 
       const res = await instance.get(API.auth.me);
+      console.log("fetchCurrentUser response:", res.data.data);
       if (res.data?.success && res.data?.data?.user) {
         return res.data.data.user as User;
       }
       return null;
     } catch (err: any) {
-      Storage.removeItem('token');
-      Storage.removeItem('refresh-token');
-      Storage.removeItem('meridian_access_token');
-      Storage.removeItem('meridian_refresh_token');
-      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch current user');
+      Storage.removeItem("token");
+      Storage.removeItem("refresh-token");
+      Storage.removeItem("meridian_access_token");
+      Storage.removeItem("meridian_refresh_token");
+      return rejectWithValue(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to fetch current user",
+      );
     }
-  }
+  },
 );
 
 export const loginUser = createAsyncThunk(
-  'auth/loginUser',
-  async ({ email, pass }: { email: string; pass: string }, { rejectWithValue }) => {
+  "auth/loginUser",
+  async (
+    { email, pass }: { email: string; pass: string },
+    { rejectWithValue },
+  ) => {
     try {
-      const res = await instance1.post(API.auth.login, { email, password: pass });
+      const res = await instance1.post(API.auth.login, {
+        email,
+        password: pass,
+      });
       const { data } = res;
       if (data?.success && data?.data) {
+        console.log("Login successful:", data.data);
         const { user, tokens } = data.data;
-        Storage.setItem('token', tokens.accessToken);
-        Storage.setItem('refresh-token', tokens.refreshToken);
-        Storage.setItem('meridian_access_token', tokens.accessToken);
-        Storage.setItem('meridian_refresh_token', tokens.refreshToken);
+        Storage.setItem("token", tokens.accessToken);
+        Storage.setItem("refresh-token", tokens.refreshToken);
+        Storage.setItem("meridian_access_token", tokens.accessToken);
+        Storage.setItem("meridian_refresh_token", tokens.refreshToken);
         return {
           user: user as User,
           token: tokens.accessToken as string,
           refreshToken: tokens.refreshToken as string,
         };
       }
-      return rejectWithValue('Login failed');
+      return rejectWithValue("Login failed");
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || err.message || 'Login failed');
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Login failed",
+      );
     }
-  }
+  },
 );
 
 export const registerUser = createAsyncThunk(
-  'auth/registerUser',
+  "auth/registerUser",
   async (
-    data: { name: string; email: string; password: string; role?: 'admin' | 'user'; bio?: string },
-    { rejectWithValue }
+    data: {
+      name: string;
+      email: string;
+      password: string;
+      role?: "admin" | "user";
+      bio?: string;
+    },
+    { rejectWithValue },
   ) => {
     try {
       const res = await instance1.post(API.auth.register, data);
       const resData = res.data;
       if (resData?.success && resData?.data) {
         const { user, tokens } = resData.data;
-        Storage.setItem('token', tokens.accessToken);
-        Storage.setItem('refresh-token', tokens.refreshToken);
-        Storage.setItem('meridian_access_token', tokens.accessToken);
-        Storage.setItem('meridian_refresh_token', tokens.refreshToken);
+        Storage.setItem("token", tokens.accessToken);
+        Storage.setItem("refresh-token", tokens.refreshToken);
+        Storage.setItem("meridian_access_token", tokens.accessToken);
+        Storage.setItem("meridian_refresh_token", tokens.refreshToken);
         return {
           user: user as User,
           token: tokens.accessToken as string,
           refreshToken: tokens.refreshToken as string,
         };
       }
-      return rejectWithValue('Registration failed');
+      return rejectWithValue("Registration failed");
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || err.message || 'Registration failed');
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Registration failed",
+      );
     }
-  }
+  },
 );
 
-export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
+export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
   try {
     await instance.post(API.auth.logout);
   } catch {
@@ -112,25 +137,33 @@ export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
     } catch {
       // Ignore
     }
-    Storage.removeItem('token');
-    Storage.removeItem('refresh-token');
-    Storage.removeItem('meridian_access_token');
-    Storage.removeItem('meridian_refresh_token');
+    Storage.removeItem("token");
+    Storage.removeItem("refresh-token");
+    Storage.removeItem("meridian_access_token");
+    Storage.removeItem("meridian_refresh_token");
   }
   return null;
 });
 
 export const socialLoginUser = createAsyncThunk(
-  'auth/socialLoginUser',
+  "auth/socialLoginUser",
   async (
-    payload: { provider: 'google' | 'facebook'; name?: string; email?: string; token?: string; avatar?: string },
-    { rejectWithValue }
+    payload: {
+      provider: "google" | "facebook";
+      name?: string;
+      email?: string;
+      token?: string;
+      avatar?: string;
+    },
+    { rejectWithValue },
   ) => {
     try {
       const { provider, name, email, token } = payload;
-      const avatar = payload.avatar || (provider === 'google'
-        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'google')}`
-        : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name || 'facebook')}`);
+      const avatar =
+        payload.avatar ||
+        (provider === "google"
+          ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || "google")}`
+          : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name || "facebook")}`);
 
       const res = await instance1.post(API.auth.socialLogin, {
         provider,
@@ -144,16 +177,17 @@ export const socialLoginUser = createAsyncThunk(
       if (resData?.success && (resData?.data || resData?.tokens)) {
         const user = resData.data?.user || resData.user;
         const tokens = resData.data?.tokens || resData.tokens;
-        const accessToken = tokens?.accessToken || resData.accessToken || resData.token;
+        const accessToken =
+          tokens?.accessToken || resData.accessToken || resData.token;
         const refreshToken = tokens?.refreshToken || resData.refreshToken;
 
         if (accessToken) {
-          Storage.setItem('token', accessToken);
-          Storage.setItem('meridian_access_token', accessToken);
+          Storage.setItem("token", accessToken);
+          Storage.setItem("meridian_access_token", accessToken);
         }
         if (refreshToken) {
-          Storage.setItem('refresh-token', refreshToken);
-          Storage.setItem('meridian_refresh_token', refreshToken);
+          Storage.setItem("refresh-token", refreshToken);
+          Storage.setItem("meridian_refresh_token", refreshToken);
         }
 
         return {
@@ -162,43 +196,54 @@ export const socialLoginUser = createAsyncThunk(
           refreshToken: refreshToken as string,
         };
       }
-      return rejectWithValue('Social sign-in failed');
+      return rejectWithValue("Social sign-in failed");
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || err.message || 'Social sign-in failed');
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Social sign-in failed",
+      );
     }
-  }
+  },
 );
 
 export const switchDemoRole = createAsyncThunk(
-  'auth/switchDemoRole',
-  async (target: 'admin' | 'user' | 'writer', { dispatch }) => {
-    if (target === 'admin') {
-      return dispatch(loginUser({ email: 'admin@meridian.dev', pass: 'admin123' })).unwrap();
-    } else if (target === 'user') {
-      return dispatch(loginUser({ email: 'julian@meridian.dev', pass: 'password123' })).unwrap();
+  "auth/switchDemoRole",
+  async (target: "admin" | "user" | "writer", { dispatch }) => {
+    if (target === "admin") {
+      return dispatch(
+        loginUser({ email: "admin@meridian.dev", pass: "admin123" }),
+      ).unwrap();
+    } else if (target === "user") {
+      return dispatch(
+        loginUser({ email: "julian@meridian.dev", pass: "password123" }),
+      ).unwrap();
     } else {
-      return dispatch(loginUser({ email: 'maya@meridian.dev', pass: 'password123' })).unwrap();
+      return dispatch(
+        loginUser({ email: "maya@meridian.dev", pass: "password123" }),
+      ).unwrap();
     }
-  }
+  },
 );
 
 export const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     clearAuthError: (state) => {
       state.error = null;
     },
-    setToken: (state, action: PayloadAction<{ token?: string; refreshToken?: string }>) => {
+    setToken: (
+      state,
+      action: PayloadAction<{ token?: string; refreshToken?: string }>,
+    ) => {
       if (action.payload.token) {
         state.token = action.payload.token;
-        Storage.setItem('token', action.payload.token);
-        Storage.setItem('meridian_access_token', action.payload.token);
+        Storage.setItem("token", action.payload.token);
+        Storage.setItem("meridian_access_token", action.payload.token);
       }
       if (action.payload.refreshToken) {
         state.refreshToken = action.payload.refreshToken;
-        Storage.setItem('refresh-token', action.payload.refreshToken);
-        Storage.setItem('meridian_refresh_token', action.payload.refreshToken);
+        Storage.setItem("refresh-token", action.payload.refreshToken);
+        Storage.setItem("meridian_refresh_token", action.payload.refreshToken);
       }
       state.isAuthenticated = !!state.token;
     },
@@ -215,10 +260,10 @@ export const authSlice = createSlice({
       state.isAdmin = false;
       state.isLoading = false;
       state.error = null;
-      Storage.removeItem('token');
-      Storage.removeItem('refresh-token');
-      Storage.removeItem('meridian_access_token');
-      Storage.removeItem('meridian_refresh_token');
+      Storage.removeItem("token");
+      Storage.removeItem("refresh-token");
+      Storage.removeItem("meridian_access_token");
+      Storage.removeItem("meridian_refresh_token");
     },
   },
   extraReducers: (builder) => {
@@ -227,13 +272,17 @@ export const authSlice = createSlice({
       .addCase(fetchCurrentUser.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(fetchCurrentUser.fulfilled, (state, action: PayloadAction<User | null>) => {
-        state.isLoading = false;
-        state.user = action.payload;
-        state.isAuthenticated = !!action.payload;
-        state.isAdmin = action.payload?.role === 'admin';
-        state.error = null;
-      })
+      .addCase(
+        fetchCurrentUser.fulfilled,
+        (state, action: PayloadAction<User | null>) => {
+          console.log("fetchCurrentUser fulfilled:", action.payload);
+          state.isLoading = false;
+          state.user = action.payload;
+          state.isAuthenticated = !!action.payload;
+          state.isAdmin = action.payload?.role === "admin";
+          state.error = null;
+        },
+      )
       .addCase(fetchCurrentUser.rejected, (state) => {
         state.isLoading = false;
         state.user = null;
@@ -253,12 +302,12 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
-        state.isAdmin = action.payload.user.role === 'admin';
+        state.isAdmin = action.payload.user.role === "admin";
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = (action.payload as string) || 'Authentication failed';
+        state.error = (action.payload as string) || "Authentication failed";
       });
 
     // registerUser
@@ -273,12 +322,12 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
-        state.isAdmin = action.payload.user.role === 'admin';
+        state.isAdmin = action.payload.user.role === "admin";
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = (action.payload as string) || 'Registration failed';
+        state.error = (action.payload as string) || "Registration failed";
       });
 
     // logoutUser
@@ -304,12 +353,12 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
-        state.isAdmin = action.payload.user.role === 'admin';
+        state.isAdmin = action.payload.user.role === "admin";
         state.error = null;
       })
       .addCase(socialLoginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = (action.payload as string) || 'Social login failed';
+        state.error = (action.payload as string) || "Social login failed";
       });
   },
 });

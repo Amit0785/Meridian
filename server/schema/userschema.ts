@@ -90,8 +90,9 @@ userSchema.pre("save", async function (this: any, next?: any) {
   }
 });
 
-export const User =
-  mongoose.models.User || mongoose.model<IUserProps>("User", userSchema);
+export const User: mongoose.Model<IUserProps> =
+  (mongoose.models.User as mongoose.Model<IUserProps>) ||
+  mongoose.model<IUserProps>("User", userSchema);
 export default User;
 
 // Standalone functions replacing UserModel class
@@ -103,8 +104,8 @@ export async function findUserById(id: string): Promise<any | null> {
   if (!user) return null;
   return {
     ...user,
-    role: user.userRole || user.role,
-    passwordHash: user.password,
+    role: (user as any).userRole || (user as any).role,
+    passwordHash: (user as any).password,
   };
 }
 
@@ -113,8 +114,8 @@ export async function findUserByEmail(email: string): Promise<any | null> {
   if (!user) return null;
   return {
     ...user,
-    role: user.userRole || user.role,
-    passwordHash: user.password,
+    role: (user as any).userRole || (user as any).role,
+    passwordHash: (user as any).password,
   };
 }
 
@@ -131,12 +132,12 @@ export async function findUserOne(
       query[key] = val;
     }
   }
-  const user = await User.findOne(query).lean();
+  const user = await User.findOne(query as any).lean();
   if (!user) return null;
   return {
     ...user,
-    role: user.userRole || user.role,
-    passwordHash: user.password,
+    role: (user as any).userRole || (user as any).role,
+    passwordHash: (user as any).password,
   };
 }
 
@@ -151,8 +152,8 @@ export async function findUsers(
       query[key] = val;
     }
   }
-  const users = await User.find(query).lean();
-  return users.map((user) => ({
+  const users = await User.find(query as any).lean();
+  return users.map((user: any) => ({
     ...user,
     role: user.userRole || user.role,
     passwordHash: user.password,
@@ -168,7 +169,6 @@ export async function createUserDoc(data: {
   avatar?: string;
   bio?: string;
   provider?: "local" | "google" | "facebook";
-  _id?: any;
 }): Promise<any> {
   const existing = await User.findOne({ email: data.email.toLowerCase() });
   if (existing) {
@@ -190,13 +190,11 @@ export async function createUserDoc(data: {
     provider: data.provider || "local",
     status: "active",
   };
-
-  if (data._id) {
-    createPayload._id = data._id;
-  }
-
   const newUser = await User.create(createPayload);
-  const obj = newUser.toObject();
+  const obj =
+    typeof (newUser as any).toObject === "function"
+      ? (newUser as any).toObject()
+      : newUser;
   return {
     ...obj,
     role: obj.userRole,
@@ -223,14 +221,19 @@ export async function updateUserById(
     const salt = await bcrypt.genSalt(10);
     queryUpdates.password = await bcrypt.hash(queryUpdates.password, salt);
   }
-  const updated = await User.findByIdAndUpdate(id, queryUpdates, {
-    returnDocument: "after",
-  }).lean();
+  const updated = await User.findByIdAndUpdate(
+    id,
+    queryUpdates as any,
+    {
+      new: true,
+      returnDocument: "after",
+    } as any,
+  ).lean();
   if (!updated) return null;
   return {
     ...updated,
-    role: updated.userRole || updated.role,
-    passwordHash: updated.password,
+    role: (updated as any).userRole || (updated as any).role,
+    passwordHash: (updated as any).password,
   };
 }
 
@@ -245,7 +248,7 @@ export async function deleteUserById(id: string): Promise<boolean> {
 export async function countUsers(
   filter: Record<string, any> = {},
 ): Promise<number> {
-  return User.countDocuments(filter);
+  return User.countDocuments(filter as any);
 }
 
 export async function compareUserPassword(

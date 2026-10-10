@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useFormik } from "formik";
 import { useAuth } from "../context/AuthContext";
+import { loginSchema, registerSchema } from "../validations/authValidation";
 import {
   X,
   Shield,
@@ -22,47 +24,76 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     switchDemoAccount,
   } = useAuth();
   const [tab, setTab] = useState<"signin" | "register">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [role, setRole] = useState<"admin" | "user">("user");
-  const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Google Account Chooser state
   const [showGoogleChooser, setShowGoogleChooser] = useState(false);
 
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "user" as "admin" | "user",
+    },
+    validate: (values) => {
+      const schema = tab === "signin" ? loginSchema : registerSchema;
+      const result = schema.safeParse(values);
+      if (result.success) return {};
+
+      const errors: Record<string, string> = {};
+      const issues = result.error.issues || (result.error as any).errors || [];
+      for (const issue of issues) {
+        const field = issue.path[0];
+        if (typeof field === "string" && !errors[field]) {
+          errors[field] = issue.message;
+        }
+      }
+      return errors;
+    },
+    onSubmit: async (values, { setSubmitting }) => {
+      setError(null);
+      try {
+        if (tab === "signin") {
+          await login(values.email, values.password);
+        } else {
+          await register({
+            name: values.name,
+            email: values.email,
+            password: values.password,
+            role: values.role,
+          });
+        }
+        handleClose();
+      } catch (err: any) {
+        setError(err.message || "Authentication error occurred");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (!isOpen) {
+      formik.resetForm();
+      setError(null);
+      setShowGoogleChooser(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleClose = () => {
     setShowGoogleChooser(false);
-
     setError(null);
+    formik.resetForm();
     onClose();
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      if (tab === "signin") {
-        await login(email, password);
-      } else {
-        await register({ name, email, password, role });
-      }
-      handleClose();
-    } catch (err: any) {
-      setError(err.message || "Authentication error occurred");
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSocial = async (provider: "google" | "facebook") => {
     setError(null);
-    setLoading(true);
+    setSocialLoading(true);
     try {
       const res = await signInWithSocialFirebase(provider);
       if (provider === "google" && res.requiresChooser) {
@@ -78,22 +109,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     } catch (err: any) {
       setError(err.message || "Social authentication failed");
     } finally {
-      setLoading(false);
+      setSocialLoading(false);
     }
   };
 
   const handleQuickDemo = async (target: "admin" | "user" | "writer") => {
     setError(null);
-    setLoading(true);
+    setSocialLoading(true);
     try {
       await switchDemoAccount(target);
       handleClose();
     } catch (err: any) {
       setError(err.message || "Demo login failed");
     } finally {
-      setLoading(false);
+      setSocialLoading(false);
     }
   };
+
+  const loading = formik.isSubmitting || socialLoading;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -130,12 +163,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               onClick={() => {
                 setTab("signin");
                 setError(null);
+                formik.setErrors({});
+                formik.setTouched({});
               }}
-              className={`flex-1 py-3 text-center transition-colors ${
-                tab === "signin"
+              className={`flex-1 py-3 text-center transition-colors ${tab === "signin"
                   ? "bg-white text-slate-900 border-b-2 border-slate-900"
                   : "text-slate-500 hover:text-slate-900"
-              }`}
+                }`}
             >
               Sign In
             </button>
@@ -144,12 +178,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               onClick={() => {
                 setTab("register");
                 setError(null);
+                formik.setErrors({});
+                formik.setTouched({});
               }}
-              className={`flex-1 py-3 text-center transition-colors ${
-                tab === "register"
+              className={`flex-1 py-3 text-center transition-colors ${tab === "register"
                   ? "bg-white text-slate-900 border-b-2 border-slate-900"
                   : "text-slate-500 hover:text-slate-900"
-              }`}
+                }`}
             >
               Register
             </button>
@@ -245,68 +280,101 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           )}
 
           {/* Credentials Form */}
-          <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-3.5">
+          <form onSubmit={formik.handleSubmit} noValidate className="px-6 pb-6 space-y-3.5">
             {tab === "register" && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="auth-name" className="block text-xs font-semibold text-slate-700 mb-1">
                   Full Name
                 </label>
                 <div className="relative">
                   <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   <input
+                    id="auth-name"
+                    name="name"
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={formik.values.name}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
                     placeholder="e.g. Maya Patel"
-                    className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
-                    required
+                    className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${formik.touched.name && formik.errors.name
+                        ? "border-rose-400 focus:ring-rose-500"
+                        : "border-slate-200 focus:ring-slate-900"
+                      }`}
                   />
                 </div>
+                {formik.touched.name && formik.errors.name && (
+                  <p className="mt-1 text-[11px] text-rose-500 font-medium">
+                    {formik.errors.name}
+                  </p>
+                )}
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="auth-email" className="block text-xs font-semibold text-slate-700 mb-1">
                 Email Address
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
+                  id="auth-email"
+                  name="email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formik.values.email}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   placeholder="name@domain.com"
-                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
-                  required
+                  className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${formik.touched.email && formik.errors.email
+                      ? "border-rose-400 focus:ring-rose-500"
+                      : "border-slate-200 focus:ring-slate-900"
+                    }`}
                 />
               </div>
+              {formik.touched.email && formik.errors.email && (
+                <p className="mt-1 text-[11px] text-rose-500 font-medium">
+                  {formik.errors.email}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="auth-password" className="block text-xs font-semibold text-slate-700 mb-1">
                 Password
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
+                  id="auth-password"
+                  name="password"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   placeholder="••••••••"
-                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
-                  required
+                  className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${formik.touched.password && formik.errors.password
+                      ? "border-rose-400 focus:ring-rose-500"
+                      : "border-slate-200 focus:ring-slate-900"
+                    }`}
                 />
               </div>
+              {formik.touched.password && formik.errors.password && (
+                <p className="mt-1 text-[11px] text-rose-500 font-medium">
+                  {formik.errors.password}
+                </p>
+              )}
             </div>
 
             {tab === "register" && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="auth-role" className="block text-xs font-semibold text-slate-700 mb-1">
                   Assign System Role
                 </label>
                 <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as "admin" | "user")}
+                  id="auth-role"
+                  name="role"
+                  value={formik.values.role}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
                 >
                   <option value="user">
@@ -336,3 +404,4 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     </div>
   );
 };
+

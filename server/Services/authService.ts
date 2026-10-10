@@ -1,6 +1,18 @@
-import { UserModel, findUserByEmail, findUserById, createUserDoc, compareUserPassword, sanitizeUser } from '../schema/userschema';
-import { AppError } from '../middleware/errorHandler';
-import { generateToken, generateRefreshToken, verifyRefreshToken, verifyToken } from '../utils/jwt';
+import {
+  UserModel,
+  findUserByEmail,
+  findUserById,
+  createUserDoc,
+  compareUserPassword,
+  sanitizeUser,
+} from "../schema/userschema";
+import { AppError } from "../middleware/errorHandler";
+import {
+  generateToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+  verifyToken,
+} from "../utils/jwt";
 
 export interface TokenPair {
   accessToken: string;
@@ -8,7 +20,13 @@ export interface TokenPair {
   expiresIn: string;
 }
 
-export const generateUserTokens = (user: { _id: string; email: string; role?: string; userRole?: string; name?: string }): TokenPair => {
+export const generateUserTokens = (user: {
+  _id: string;
+  email: string;
+  role?: string;
+  userRole?: string;
+  name?: string;
+}): TokenPair => {
   const accessToken = generateToken({
     _id: user._id,
     email: user.email,
@@ -22,7 +40,7 @@ export const generateUserTokens = (user: { _id: string; email: string; role?: st
   return {
     accessToken,
     refreshToken,
-    expiresIn: '15m',
+    expiresIn: "15m",
   };
 };
 
@@ -30,24 +48,28 @@ export async function registerUser(data: {
   name: string;
   email: string;
   password: string;
-  role?: 'admin' | 'user';
-  userRole?: 'admin' | 'user';
+  role?: "admin" | "user";
+  userRole?: "admin" | "user";
   bio?: string;
 }) {
   const existing = await findUserByEmail(data.email);
   if (existing) {
-    throw new AppError('An account with this email already exists', 409, 'EMAIL_EXISTS');
+    throw new AppError(
+      "An account with this email already exists",
+      409,
+      "EMAIL_EXISTS",
+    );
   }
 
-  const role = data.userRole || data.role || 'user';
+  const role = data.userRole || data.role || "user";
   const user = await createUserDoc({
     name: data.name,
     email: data.email,
     password: data.password,
     role,
     userRole: role,
-    bio: data.bio || '',
-    provider: 'local',
+    bio: data.bio || "",
+    provider: "local",
   });
 
   const tokens = generateUserTokens(user);
@@ -61,16 +83,31 @@ export async function registerUser(data: {
 export async function loginUser(email: string, plainPassword: string) {
   const user = await findUserByEmail(email);
   if (!user) {
-    throw new AppError('Invalid email or password credentials', 401, 'INVALID_CREDENTIALS');
+    throw new AppError(
+      "Invalid email or password credentials",
+      401,
+      "INVALID_CREDENTIALS",
+    );
   }
 
-  if (user.status === 'suspended') {
-    throw new AppError('Your account has been suspended by an administrator', 403, 'ACCOUNT_SUSPENDED');
+  if (user.status === "suspended") {
+    throw new AppError(
+      "Your account has been suspended by an administrator",
+      403,
+      "ACCOUNT_SUSPENDED",
+    );
   }
 
-  const isMatch = await compareUserPassword(plainPassword, user.password || user.passwordHash);
+  const isMatch = await compareUserPassword(
+    plainPassword,
+    user.password || user.passwordHash,
+  );
   if (!isMatch) {
-    throw new AppError('Invalid email or password credentials', 401, 'INVALID_CREDENTIALS');
+    throw new AppError(
+      "Invalid email or password credentials",
+      401,
+      "INVALID_CREDENTIALS",
+    );
   }
 
   const tokens = generateUserTokens(user);
@@ -89,7 +126,11 @@ export async function refreshUserTokens(refreshToken: string) {
     try {
       decoded = verifyToken(refreshToken);
     } catch {
-      throw new AppError('Invalid or expired refresh token. Please sign in again.', 401, 'INVALID_REFRESH_TOKEN');
+      throw new AppError(
+        "Invalid or expired refresh token. Please sign in again.",
+        401,
+        "INVALID_REFRESH_TOKEN",
+      );
     }
   }
 
@@ -101,11 +142,15 @@ export async function refreshUserTokens(refreshToken: string) {
   }
 
   if (!user) {
-    throw new AppError('User session invalid or user not found.', 401, 'USER_NOT_FOUND');
+    throw new AppError(
+      "User session invalid or user not found.",
+      401,
+      "USER_NOT_FOUND",
+    );
   }
 
-  if (user.status === 'suspended') {
-    throw new AppError('Account is suspended', 403, 'ACCOUNT_SUSPENDED');
+  if (user.status === "suspended") {
+    throw new AppError("Account is suspended", 403, "ACCOUNT_SUSPENDED");
   }
 
   const tokens = generateUserTokens(user);
@@ -117,7 +162,7 @@ export async function refreshUserTokens(refreshToken: string) {
 }
 
 export async function socialLoginUser(data: {
-  provider: 'google' | 'facebook';
+  provider: "google" | "facebook";
   token?: string;
   name?: string;
   email?: string;
@@ -129,16 +174,16 @@ export async function socialLoginUser(data: {
 
   if (data.token) {
     try {
-      const parts = data.token.split('.');
+      const parts = data.token.split(".");
       if (parts.length >= 2) {
-        let payloadJson = '';
+        let payloadJson = "";
         try {
-          payloadJson = Buffer.from(parts[1], 'base64url').toString('utf-8');
+          payloadJson = Buffer.from(parts[1], "base64url").toString("utf-8");
         } catch {
-          payloadJson = Buffer.from(parts[1], 'base64').toString('utf-8');
+          payloadJson = Buffer.from(parts[1], "base64").toString("utf-8");
         }
         const payload = JSON.parse(payloadJson);
-        
+
         if (payload.email) {
           email = payload.email.toLowerCase();
         }
@@ -150,16 +195,17 @@ export async function socialLoginUser(data: {
         }
       }
     } catch (err) {
-      console.warn('Failed to parse token payload in socialLogin:', err);
+      console.warn("Failed to parse token payload in socialLogin:", err);
     }
   }
 
   if (!email) {
-    email = data.email?.toLowerCase() || `${data.provider}.${Date.now()}@meridian.io`;
+    email =
+      data.email?.toLowerCase() || `${data.provider}.${Date.now()}@meridian.io`;
   }
 
   if (!name) {
-    name = email.split('@')[0];
+    name = email.split("@")[0];
   }
 
   let user = await findUserByEmail(email);
@@ -168,15 +214,17 @@ export async function socialLoginUser(data: {
     user = await createUserDoc({
       name,
       email,
-      avatar: avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
-      role: 'user',
+      avatar:
+        avatar ||
+        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
+      role: "user",
       provider: data.provider,
       bio: `Member via ${data.provider.toUpperCase()} single sign-on`,
     });
   }
 
-  if (user.status === 'suspended') {
-    throw new AppError('Account is suspended', 403, 'ACCOUNT_SUSPENDED');
+  if (user.status === "suspended") {
+    throw new AppError("Account is suspended", 403, "ACCOUNT_SUSPENDED");
   }
 
   const tokens = generateUserTokens(user);

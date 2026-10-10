@@ -3,6 +3,7 @@ import authReducer from "./slices/authSlice";
 import postsReducer from "./slices/postsSlice";
 import notificationsReducer from "./slices/notificationsSlice";
 import uiReducer from "./slices/uiSlice";
+import adminReducer from "./slices/adminSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     posts: postsReducer,
     notifications: notificationsReducer,
     ui: uiReducer,
+    admin: adminReducer,
   },
   devTools: true,
   middleware: (getDefaultMiddleware) =>

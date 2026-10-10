@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Post, Pagination } from '../../types';
+import { Post, Pagination, Comment } from '../../types';
 import { instance, instance1, instance2, API } from '../../lib/api';
 
 export interface PostsState {
@@ -11,6 +11,9 @@ export interface PostsState {
   pagination: Pagination | null;
   loading: boolean;
   error: string | null;
+  comments: Comment[];
+  commentsLoading: boolean;
+  commentsError: string | null;
 }
 
 const initialState: PostsState = {
@@ -22,6 +25,9 @@ const initialState: PostsState = {
   pagination: null,
   loading: false,
   error: null,
+  comments: [],
+  commentsLoading: false,
+  commentsError: null,
 };
 
 export const fetchPosts = createAsyncThunk(
@@ -89,11 +95,14 @@ export const createPostThunk = createAsyncThunk(
 
 export const updatePostThunk = createAsyncThunk(
   'posts/updatePostThunk',
-  async ({ id, postData }: { id: string; postData: any }, { rejectWithValue }) => {
+  async (
+    { id, postData }: { id: string; postData: any },
+    { rejectWithValue }
+  ) => {
     try {
       const isFormData = typeof FormData !== 'undefined' && postData instanceof FormData;
       const axiosClient = isFormData ? instance2 : instance;
-      const res = await axiosClient.put(`${API.posts.base}/${id}`, postData);
+      const res = await axiosClient.patch(`${API.posts.base}/${id}`, postData);
       const data = res.data;
       if (data?.success && data?.data) {
         return data.data as Post;
@@ -167,6 +176,24 @@ export const fetchTaxonomy = createAsyncThunk(
   }
 );
 
+export const fetchComments = createAsyncThunk(
+  'posts/fetchComments',
+  async (postId: string, { rejectWithValue }) => {
+    try {
+      const res = await instance1.get(`${API.comments.base}/post/${postId}`);
+      const data = res.data;
+      if (data?.success && Array.isArray(data.data)) {
+        return data.data as Comment[];
+      }
+      return [];
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || err.message || 'Failed to load comments'
+      );
+    }
+  }
+);
+
 export const postsSlice = createSlice({
   name: 'posts',
   initialState,
@@ -179,6 +206,21 @@ export const postsSlice = createSlice({
     },
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
+    },
+    setComments: (state, action: PayloadAction<Comment[]>) => {
+      state.comments = action.payload;
+    },
+    addComment: (state, action: PayloadAction<Comment>) => {
+      state.comments.push(action.payload);
+    },
+    updateComment: (state, action: PayloadAction<Comment>) => {
+      const index = state.comments.findIndex((c) => c._id === action.payload._id);
+      if (index !== -1) {
+        state.comments[index] = action.payload;
+      }
+    },
+    removeComment: (state, action: PayloadAction<string>) => {
+      state.comments = state.comments.filter((c) => c._id !== action.payload);
     },
   },
   extraReducers: (builder) => {
@@ -260,6 +302,21 @@ export const postsSlice = createSlice({
     builder.addCase(fetchTaxonomy.fulfilled, (state, action) => {
       state.tags = ['All', ...action.payload];
     });
+
+    // fetchComments
+    builder
+      .addCase(fetchComments.pending, (state) => {
+        state.commentsLoading = true;
+        state.commentsError = null;
+      })
+      .addCase(fetchComments.fulfilled, (state, action) => {
+        state.commentsLoading = false;
+        state.comments = action.payload;
+      })
+      .addCase(fetchComments.rejected, (state, action) => {
+        state.commentsLoading = false;
+        state.commentsError = (action.payload as string) || 'Failed to load comments';
+      });
   },
 });
 
@@ -267,6 +324,10 @@ export const {
   setSelectedPost,
   setEditingPost,
   setSearchQuery,
+  setComments,
+  addComment,
+  updateComment,
+  removeComment,
 } = postsSlice.actions;
 
 export default postsSlice.reducer;

@@ -106,7 +106,6 @@ export const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 
   const responseData = {
-    ...UserWithoutPassword,
     user: UserWithoutPassword,
     tokens: {
       accessToken,

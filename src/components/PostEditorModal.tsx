@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Post } from '../types';
-import { X, Globe, Eye, FileText, Check } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useFormik } from "formik";
+import { Post } from "../types";
+import { postEditorSchema } from "../validations/postValidation";
+import { X, Globe, Eye, FileText, Check } from "lucide-react";
 
 interface PostEditorModalProps {
   isOpen: boolean;
@@ -9,8 +11,6 @@ interface PostEditorModalProps {
     title: string;
     content: string;
     excerpt?: string;
-    tags: string[];
-    coverImage?: string;
     featured?: boolean;
   }) => Promise<void>;
   initialData?: Post | null;
@@ -22,75 +22,77 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
   onSubmit,
   initialData,
 }) => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [excerpt, setExcerpt] = useState('');
-  const [tagsInput, setTagsInput] = useState('');
-  const [coverImage, setCoverImage] = useState('');
-  const [featured, setFeatured] = useState(false);
-  const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
-  const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const [error, setError] = useState<string | null>(null);
 
+  const formik = useFormik({
+    initialValues: {
+      title: initialData?.title || "",
+      content: initialData?.content || "",
+      excerpt: initialData?.excerpt || "",
+      featured: initialData?.featured || false,
+    },
+    enableReinitialize: true,
+    validate: (values) => {
+      const result = postEditorSchema.safeParse(values);
+      if (result.success) return {};
+
+      const errors: Record<string, string> = {};
+      const issues = result.error.issues || (result.error as any).errors || [];
+      for (const issue of issues) {
+        const field = issue.path[0];
+        if (typeof field === "string" && !errors[field]) {
+          errors[field] = issue.message;
+        }
+      }
+      return errors;
+    },
+    onSubmit: async (values, { setSubmitting }) => {
+      setError(null);
+
+      try {
+        await onSubmit({
+          title: values.title.trim(),
+          content: values.content.trim(),
+          excerpt: values.excerpt.trim() || undefined,
+
+          featured: values.featured,
+        });
+        onClose();
+      } catch (err: any) {
+        setError(err.message || "Failed to save publication");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
+
   useEffect(() => {
-    if (initialData) {
-      setTitle(initialData.title);
-      setContent(initialData.content);
-      setExcerpt(initialData.excerpt || '');
-      setTagsInput(initialData.tags?.join(', ') || '');
-      setCoverImage(initialData.coverImage || '');
-      setFeatured(initialData.featured || false);
-    } else {
-      setTitle('');
-      setContent('');
-      setExcerpt('');
-      setTagsInput('');
-      setCoverImage('');
-      setFeatured(false);
+    if (isOpen) {
+      formik.resetForm({
+        values: {
+          title: initialData?.title || "",
+          content: initialData?.content || "",
+          excerpt: initialData?.excerpt || "",
+
+          featured: initialData?.featured || false,
+        },
+      });
+      setError(null);
+      setActiveTab("write");
     }
-    setError(null);
-  }, [initialData, isOpen]);
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
   // Real-time slug preview generator
-  const slugPreview = title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'your-story-title';
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !content.trim()) {
-      setError('Title and content are required.');
-      return;
-    }
-
-    const tags = tagsInput
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-
-    try {
-      setSubmitting(true);
-      setError(null);
-      await onSubmit({
-        title: title.trim(),
-        content: content.trim(),
-        excerpt: excerpt.trim() || undefined,
-        tags,
-        coverImage: coverImage.trim() || undefined,
-        featured,
-      });
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save publication');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const slugPreview =
+    formik.values.title
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "your-story-title";
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -99,7 +101,7 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-900">
-              {initialData ? 'Edit Publication' : 'Write a New Story'}
+              {initialData ? "Edit Publication" : "Write a New Story"}
             </h3>
             <p className="text-xs text-slate-500 font-mono flex items-center gap-1.5 mt-0.5">
               <Globe className="w-3.5 h-3.5 text-indigo-500" />
@@ -121,62 +123,86 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
         )}
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+        <form
+          onSubmit={formik.handleSubmit}
+          noValidate
+          className="flex-1 overflow-y-auto p-6 space-y-5"
+        >
           {/* Title */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            <label
+              htmlFor="post-title"
+              className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5"
+            >
               Article Title *
             </label>
             <input
+              id="post-title"
+              name="title"
               type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
+              value={formik.values.title}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="e.g. Architecting Resilient Microservices with Outbox Pattern"
-              className="w-full text-base font-semibold text-slate-900 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              required
+              className={`w-full text-base font-semibold text-slate-900 border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 ${
+                formik.touched.title && formik.errors.title
+                  ? "border-rose-400"
+                  : "border-slate-200"
+              }`}
             />
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Tags (Comma separated)
-            </label>
-            <input
-              type="text"
-              value={tagsInput}
-              onChange={e => setTagsInput(e.target.value)}
-              placeholder="Microservices, Node.js, Security"
-              className="w-full text-sm text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-            />
+            {formik.touched.title && formik.errors.title && (
+              <p className="mt-1 text-xs text-rose-500 font-medium">
+                {formik.errors.title}
+              </p>
+            )}
           </div>
 
           {/* Excerpt */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            <label
+              htmlFor="post-excerpt"
+              className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5"
+            >
               Summary / Excerpt (Optional)
             </label>
             <input
+              id="post-excerpt"
+              name="excerpt"
               type="text"
-              value={excerpt}
-              onChange={e => setExcerpt(e.target.value)}
+              value={formik.values.excerpt}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="A concise synopsis to display in article listings and previews..."
-              className="w-full text-sm text-slate-800 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className={`w-full text-sm text-slate-800 border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 ${
+                formik.touched.excerpt && formik.errors.excerpt
+                  ? "border-rose-400"
+                  : "border-slate-200"
+              }`}
             />
+            {formik.touched.excerpt && formik.errors.excerpt && (
+              <p className="mt-1 text-xs text-rose-500 font-medium">
+                {formik.errors.excerpt}
+              </p>
+            )}
           </div>
 
           {/* Content Editor with Write & Preview Tabs */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <label
+                htmlFor="post-content"
+                className="text-xs font-bold uppercase tracking-wider text-slate-700"
+              >
                 Content (Markdown supported) *
               </label>
               <div className="flex items-center p-0.5 bg-slate-100 rounded-lg text-xs">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('write')}
+                  onClick={() => setActiveTab("write")}
                   className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
-                    activeTab === 'write' ? 'bg-white font-semibold text-slate-900 shadow-sm' : 'text-slate-600'
+                    activeTab === "write"
+                      ? "bg-white font-semibold text-slate-900 shadow-sm"
+                      : "text-slate-600"
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5" />
@@ -184,9 +210,11 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('preview')}
+                  onClick={() => setActiveTab("preview")}
                   className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
-                    activeTab === 'preview' ? 'bg-white font-semibold text-slate-900 shadow-sm' : 'text-slate-600'
+                    activeTab === "preview"
+                      ? "bg-white font-semibold text-slate-900 shadow-sm"
+                      : "text-slate-600"
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -195,21 +223,38 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
               </div>
             </div>
 
-            {activeTab === 'write' ? (
-              <textarea
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                placeholder="### Introduction&#10;&#10;Write your deep-dive insights using markdown syntax..."
-                rows={12}
-                className="w-full text-sm font-mono leading-relaxed bg-white border border-slate-200 rounded-xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                required
-              />
+            {activeTab === "write" ? (
+              <div>
+                <textarea
+                  id="post-content"
+                  name="content"
+                  value={formik.values.content}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  placeholder="### Introduction&#10;&#10;Write your deep-dive insights using markdown syntax..."
+                  rows={12}
+                  className={`w-full text-sm font-mono leading-relaxed bg-white border rounded-xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 ${
+                    formik.touched.content && formik.errors.content
+                      ? "border-rose-400"
+                      : "border-slate-200"
+                  }`}
+                />
+                {formik.touched.content && formik.errors.content && (
+                  <p className="mt-1 text-xs text-rose-500 font-medium">
+                    {formik.errors.content}
+                  </p>
+                )}
+              </div>
             ) : (
               <div className="min-h-[280px] p-4 bg-slate-50 border border-slate-200 rounded-xl overflow-y-auto max-h-[350px] text-slate-800 text-sm leading-relaxed prose">
-                {content.trim() ? (
-                  content.split('\n\n').map((para, i) => <p key={i}>{para}</p>)
+                {formik.values.content.trim() ? (
+                  formik.values.content
+                    .split("\n\n")
+                    .map((para, i) => <p key={i}>{para}</p>)
                 ) : (
-                  <p className="text-slate-400 italic">No content to preview yet.</p>
+                  <p className="text-slate-400 italic">
+                    No content to preview yet.
+                  </p>
                 )}
               </div>
             )}
@@ -220,11 +265,16 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
             <input
               type="checkbox"
               id="featuredCheckbox"
-              checked={featured}
-              onChange={e => setFeatured(e.target.checked)}
+              name="featured"
+              checked={formik.values.featured}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
             />
-            <label htmlFor="featuredCheckbox" className="text-xs text-slate-700 font-medium">
+            <label
+              htmlFor="featuredCheckbox"
+              className="text-xs text-slate-700 font-medium"
+            >
               Feature this story on the home hero banner
             </label>
           </div>
@@ -241,12 +291,18 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
+            onClick={() => formik.handleSubmit()}
+            disabled={formik.isSubmitting}
             className="flex items-center gap-1.5 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm disabled:opacity-50"
           >
             <Check className="w-3.5 h-3.5" />
-            <span>{submitting ? 'Saving...' : initialData ? 'Update Story' : 'Publish Story'}</span>
+            <span>
+              {formik.isSubmitting
+                ? "Saving..."
+                : initialData
+                  ? "Update Story"
+                  : "Publish Story"}
+            </span>
           </button>
         </div>
       </div>

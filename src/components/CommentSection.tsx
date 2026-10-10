@@ -1,7 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Comment } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  fetchComments,
+  addComment,
+  updateComment,
+  removeComment,
+} from '../store/slices/postsSlice';
 import { MessageSquare, Send, Edit2, Trash2, Check, X, Shield } from 'lucide-react';
 
 interface CommentSectionProps {
@@ -11,31 +18,24 @@ interface CommentSectionProps {
 
 export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAuth }) => {
   const { user, isAdmin, isAuthenticated } = useAuth();
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const { comments, commentsLoading: loading, commentsError } = useAppSelector(
+    (state) => state.posts
+  );
+
   const [newContent, setNewContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  const fetchComments = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await api.get<Comment[]>(`/comments/post/${postId}`);
-      if (res.success && Array.isArray(res.data)) {
-        setComments(res.data);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load comments');
-    } finally {
-      setLoading(false);
-    }
-  }, [postId]);
+  const error = localError || commentsError;
 
   useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
+    if (postId) {
+      dispatch(fetchComments(postId));
+    }
+  }, [dispatch, postId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,16 +43,16 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
 
     try {
       setSubmitting(true);
-      setError(null);
+      setLocalError(null);
       const res = await api.post(`/comments/post/${postId}`, {
         content: newContent.trim(),
       });
       if (res.success && res.data) {
-        setComments(prev => [...prev, res.data]);
+        dispatch(addComment(res.data));
         setNewContent('');
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to submit comment');
+      setLocalError(err.message || 'Failed to submit comment');
     } finally {
       setSubmitting(false);
     }
@@ -70,11 +70,11 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
         content: editContent.trim(),
       });
       if (res.success && res.data) {
-        setComments(prev => prev.map(c => (c._id === commentId ? { ...c, content: editContent.trim() } : c)));
+        dispatch(updateComment(res.data));
         setEditingId(null);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to update comment');
+      setLocalError(err.message || 'Failed to update comment');
     }
   };
 
@@ -82,9 +82,9 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
     if (!confirm('Are you sure you want to delete this comment?')) return;
     try {
       await api.delete(`/comments/${commentId}`);
-      setComments(prev => prev.filter(c => c._id !== commentId));
+      dispatch(removeComment(commentId));
     } catch (err: any) {
-      setError(err.message || 'Failed to delete comment');
+      setLocalError(err.message || 'Failed to delete comment');
     }
   };
 
