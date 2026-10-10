@@ -167,8 +167,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 formik.setTouched({});
               }}
               className={`flex-1 py-3 text-center transition-colors ${tab === "signin"
-                  ? "bg-white text-slate-900 border-b-2 border-slate-900"
-                  : "text-slate-500 hover:text-slate-900"
+                ? "bg-white text-slate-900 border-b-2 border-slate-900"
+                : "text-slate-500 hover:text-slate-900"
                 }`}
             >
               Sign In
@@ -182,8 +182,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 formik.setTouched({});
               }}
               className={`flex-1 py-3 text-center transition-colors ${tab === "register"
-                  ? "bg-white text-slate-900 border-b-2 border-slate-900"
-                  : "text-slate-500 hover:text-slate-900"
+                ? "bg-white text-slate-900 border-b-2 border-slate-900"
+                : "text-slate-500 hover:text-slate-900"
                 }`}
             >
               Register
@@ -297,8 +297,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     onBlur={formik.handleBlur}
                     placeholder="e.g. Maya Patel"
                     className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${formik.touched.name && formik.errors.name
-                        ? "border-rose-400 focus:ring-rose-500"
-                        : "border-slate-200 focus:ring-slate-900"
+                      ? "border-rose-400 focus:ring-rose-500"
+                      : "border-slate-200 focus:ring-slate-900"
                       }`}
                   />
                 </div>
@@ -325,8 +325,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   onBlur={formik.handleBlur}
                   placeholder="name@domain.com"
                   className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${formik.touched.email && formik.errors.email
-                      ? "border-rose-400 focus:ring-rose-500"
-                      : "border-slate-200 focus:ring-slate-900"
+                    ? "border-rose-400 focus:ring-rose-500"
+                    : "border-slate-200 focus:ring-slate-900"
                     }`}
                 />
               </div>
@@ -352,8 +352,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   onBlur={formik.handleBlur}
                   placeholder="••••••••"
                   className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${formik.touched.password && formik.errors.password
-                      ? "border-rose-400 focus:ring-rose-500"
-                      : "border-slate-200 focus:ring-slate-900"
+                    ? "border-rose-400 focus:ring-rose-500"
+                    : "border-slate-200 focus:ring-slate-900"
                     }`}
                 />
               </div>

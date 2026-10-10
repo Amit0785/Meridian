@@ -271,9 +271,9 @@ export async function runFullSuite(): Promise<TestSuiteReport> {
     "RBAC Authorization & Resource Ownership",
     "Verifies regular users cannot modify other users posts, while Admins have universal management",
     async () => {
-      const ownerUser = "65f1a0000000000000000002";
-      const otherUser = "65f1a0000000000000000003";
-      const adminUser = "65f1a0000000000000000001";
+      const ownerUser = "6aca53ba1d481c6c2e7db3de";
+      const otherUser = "6aca53f41d481c6c2e7db3e0";
+      const adminUser = "6aca2643a94be936cd6b8d4b";
 
       const post = await PostModel.create({
         title: `RBAC Ownership Verification ${Date.now()}`,

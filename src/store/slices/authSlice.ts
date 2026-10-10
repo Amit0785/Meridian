@@ -44,8 +44,8 @@ export const fetchCurrentUser = createAsyncThunk(
       Storage.removeItem("refresh-token");
       return rejectWithValue(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to fetch current user",
+        err.message ||
+        "Failed to fetch current user",
       );
     }
   },
@@ -234,7 +234,7 @@ export const authSlice = createSlice({
     },
     logoutRequest: (state) => {
       try {
-        firebaseSignOut(firebaseAuth).catch(() => {});
+        firebaseSignOut(firebaseAuth).catch(() => { });
       } catch {
         // Ignore
       }

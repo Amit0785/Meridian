@@ -15,6 +15,7 @@ import {
   socialLoginUser,
   switchDemoRole,
 } from "../store/slices/authSlice";
+import { clearAllNotifications } from "../store/slices/notificationsSlice";
 import { User } from "../types";
 
 interface AuthContextType {
@@ -80,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.warn("Firebase signout error:", e);
     }
+    dispatch(clearAllNotifications());
     await dispatch(logoutUser()).unwrap();
   };
 

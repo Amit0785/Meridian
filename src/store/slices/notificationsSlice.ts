@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { NotificationItem } from '../../types';
 import { instance } from '../../lib/api';
+import { logoutUser, logoutRequest } from './authSlice';
 
 export interface NotificationsState {
   notifications: NotificationItem[];
@@ -52,6 +53,11 @@ export const notificationsSlice = createSlice({
       state.notifications = state.notifications.filter((n) => n.id !== action.payload);
       state.unreadCount = state.notifications.filter((n) => !n.read).length;
     },
+    clearAllNotifications: (state) => {
+      state.notifications = [];
+      state.unreadCount = 0;
+      state.activeToast = null;
+    },
     dismissToast: (state) => {
       state.activeToast = null;
     },
@@ -68,6 +74,16 @@ export const notificationsSlice = createSlice({
       })
       .addCase(fetchNotificationHistory.rejected, (state) => {
         state.loading = false;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.notifications = [];
+        state.unreadCount = 0;
+        state.activeToast = null;
+      })
+      .addCase(logoutRequest, (state) => {
+        state.notifications = [];
+        state.unreadCount = 0;
+        state.activeToast = null;
       });
   },
 });
@@ -77,6 +93,7 @@ export const {
   addNotificationItem,
   markAllNotificationsRead,
   clearNotificationItem,
+  clearAllNotifications,
   dismissToast,
 } = notificationsSlice.actions;
 

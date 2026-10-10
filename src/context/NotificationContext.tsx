@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, SetStateAction, Dispatch } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   fetchNotificationHistory,
@@ -6,15 +6,18 @@ import {
   addNotificationItem,
   markAllNotificationsRead,
   clearNotificationItem,
+  clearAllNotifications,
   dismissToast as dismissToastAction,
 } from '../store/slices/notificationsSlice';
 import { NotificationItem } from '../types';
 
 interface NotificationContextType {
   notifications: NotificationItem[];
+  setNotificationsList: Dispatch<SetStateAction<NotificationItem[]>>;
   unreadCount: number;
   markAllAsRead: () => void;
   clearNotification: (id: string) => void;
+  clearAllNotifications: () => void;
   activeToast: NotificationItem | null;
   dismissToast: () => void;
 }
@@ -24,14 +27,21 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useAppDispatch();
   const { notifications, unreadCount, activeToast } = useAppSelector((state) => state.notifications);
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  // Fetch initial history via Redux thunk
+  // Fetch history when user is authenticated, clear on logout
   useEffect(() => {
-    dispatch(fetchNotificationHistory());
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(fetchNotificationHistory());
+    } else {
+      dispatch(clearAllNotifications());
+    }
+  }, [isAuthenticated, dispatch]);
 
-  // Connect to SSE stream
+  // Connect to SSE stream only when authenticated
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     let eventSource: EventSource | null = null;
     try {
       eventSource = new EventSource('/api/v1/notifications/stream');
@@ -60,7 +70,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         eventSource.close();
       }
     };
-  }, [dispatch]);
+  }, [isAuthenticated, dispatch]);
+
+  const setNotificationsListHandler: Dispatch<SetStateAction<NotificationItem[]>> = useCallback(
+    (action) => {
+      if (typeof action === 'function') {
+        dispatch(setNotificationsList(action(notifications)));
+      } else {
+        dispatch(setNotificationsList(action));
+      }
+    },
+    [dispatch, notifications]
+  );
 
   const markAllAsRead = useCallback(() => {
     dispatch(markAllNotificationsRead());
@@ -68,6 +89,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const clearNotification = useCallback((id: string) => {
     dispatch(clearNotificationItem(id));
+  }, [dispatch]);
+
+  const clearAllNotificationsHandler = useCallback(() => {
+    dispatch(clearAllNotifications());
   }, [dispatch]);
 
   const dismissToast = useCallback(() => {
@@ -78,9 +103,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     <NotificationContext.Provider
       value={{
         notifications,
+        setNotificationsList: setNotificationsListHandler,
         unreadCount,
         markAllAsRead,
         clearNotification,
+        clearAllNotifications: clearAllNotificationsHandler,
         activeToast,
         dismissToast,
       }}

@@ -1,7 +1,10 @@
-import React from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { NotificationProvider, useNotifications } from './context/NotificationContext';
-import { useAppDispatch, useAppSelector } from './store/hooks';
+import React from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import {
+  NotificationProvider,
+  useNotifications,
+} from "./context/NotificationContext";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
 import {
   setCurrentTab,
   setNewPostOpen,
@@ -10,7 +13,7 @@ import {
   setTestRunnerOpen,
   setNotificationsOpen,
   setDemoGuideOpen,
-} from './store/slices/uiSlice';
+} from "./store/slices/uiSlice";
 import {
   setSelectedPost,
   setEditingPost,
@@ -20,21 +23,22 @@ import {
   restorePostThunk,
   permanentDeletePostThunk,
   fetchPostBySlug,
-} from './store/slices/postsSlice';
-import { Navbar } from './components/Navbar';
-import { Footer } from './components/Footer';
-import { HomePage } from './pages/HomePage';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { MyPostsPage } from './pages/MyPostsPage';
-import { PostDetail } from './components/PostDetail';
-import { PostEditorModal } from './components/PostEditorModal';
-import { AuthModal } from './components/AuthModal';
-import { ApiDocsModal } from './components/ApiDocsModal';
-import { TestRunnerModal } from './components/TestRunnerModal';
-import { NotificationDrawer } from './components/NotificationDrawer';
-import { DemoGuideModal } from './components/DemoGuideModal';
-import { Post } from './types';
-import { X, Bell } from 'lucide-react';
+} from "./store/slices/postsSlice";
+import { Navbar } from "./components/Navbar";
+import { Footer } from "./components/Footer";
+import { HomePage } from "./pages/HomePage";
+import { AdminDashboard } from "./pages/AdminDashboard";
+import { MyPostsPage } from "./pages/MyPostsPage";
+import { PostDetail } from "./components/PostDetail";
+import { PostEditorModal } from "./components/PostEditorModal";
+import { AuthModal } from "./components/AuthModal";
+import { ApiDocsModal } from "./components/ApiDocsModal";
+import { TestRunnerModal } from "./components/TestRunnerModal";
+import { NotificationDrawer } from "./components/NotificationDrawer";
+import { DemoGuideModal } from "./components/DemoGuideModal";
+import { Post } from "./types";
+import { X, Bell } from "lucide-react";
+import { shallowEqual } from "react-redux";
 
 function MainApp() {
   const dispatch = useAppDispatch();
@@ -50,10 +54,13 @@ function MainApp() {
     isTestRunnerOpen,
     isNotificationsOpen,
     isDemoGuideOpen,
-  } = useAppSelector((state) => state.ui);
+  } = useAppSelector((state) => state.ui, shallowEqual);
 
   // Redux Posts State
-  const { selectedPost, editingPost } = useAppSelector((state) => state.posts);
+  const { selectedPost, editingPost } = useAppSelector(
+    (state) => state.posts,
+    shallowEqual,
+  );
 
   const handleSelectPost = async (post: Post) => {
     try {
@@ -61,20 +68,22 @@ function MainApp() {
     } catch {
       dispatch(setSelectedPost(post));
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleNavigatePostBySlug = async (slug: string) => {
     try {
       await dispatch(fetchPostBySlug(slug)).unwrap();
     } catch (err) {
-      console.warn('Navigation error:', err);
+      console.warn("Navigation error:", err);
     }
   };
 
   const handleSavePost = async (postData: any) => {
     if (editingPost) {
-      await dispatch(updatePostThunk({ id: editingPost._id, postData })).unwrap();
+      await dispatch(
+        updatePostThunk({ id: editingPost._id, postData }),
+      ).unwrap();
     } else {
       await dispatch(createPostThunk(postData)).unwrap();
     }
@@ -83,11 +92,12 @@ function MainApp() {
   };
 
   const handleDeletePost = async (post: Post) => {
-    if (!confirm(`Are you sure you want to move "${post.title}" to trash?`)) return;
+    if (!confirm(`Are you sure you want to move "${post.title}" to trash?`))
+      return;
     try {
       await dispatch(softDeletePostThunk(post._id)).unwrap();
     } catch (err: any) {
-      alert(err.message || 'Failed to soft delete post');
+      alert(err.message || "Failed to soft delete post");
     }
   };
 
@@ -95,16 +105,19 @@ function MainApp() {
     try {
       await dispatch(restorePostThunk(post._id)).unwrap();
     } catch (err: any) {
-      alert(err.message || 'Failed to restore post');
+      alert(err.message || "Failed to restore post");
     }
   };
 
   const handlePermanentDelete = async (post: Post) => {
-    if (!confirm(`Permanently remove "${post.title}" and comments from database?`)) return;
+    if (
+      !confirm(`Permanently remove "${post.title}" and comments from database?`)
+    )
+      return;
     try {
       await dispatch(permanentDeletePostThunk(post._id)).unwrap();
     } catch (err: any) {
-      alert(err.message || 'Failed to permanently delete post');
+      alert(err.message || "Failed to permanently delete post");
     }
   };
 
@@ -147,14 +160,17 @@ function MainApp() {
             onPermanentDelete={handlePermanentDelete}
             onOpenAuth={() => dispatch(setAuthOpen(true))}
           />
-        ) : currentTab === 'admin' ? (
+        ) : currentTab === "admin" ? (
           isAdmin ? (
             <AdminDashboard onSelectPost={handleSelectPost} />
           ) : (
             <div className="max-w-md mx-auto py-24 px-4 text-center">
-              <h3 className="text-lg font-bold text-slate-900 mb-2">Restricted Admin Area</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">
+                Restricted Admin Area
+              </h3>
               <p className="text-xs text-slate-500 mb-4">
-                You must possess an Administrator role to access system statistics, user moderation, and trash recovery.
+                You must possess an Administrator role to access system
+                statistics, user moderation, and trash recovery.
               </p>
               <button
                 onClick={() => dispatch(setAuthOpen(true))}
@@ -164,7 +180,7 @@ function MainApp() {
               </button>
             </div>
           )
-        ) : currentTab === 'my-posts' ? (
+        ) : currentTab === "my-posts" ? (
           <MyPostsPage
             onSelectPost={handleSelectPost}
             onEditPost={(p) => {
@@ -205,8 +221,12 @@ function MainApp() {
           <div className="flex items-start gap-2.5">
             <Bell className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
             <div>
-              <div className="text-xs font-bold text-white">{activeToast.title}</div>
-              <div className="text-[11px] text-slate-300 mt-0.5 leading-snug">{activeToast.message}</div>
+              <div className="text-xs font-bold text-white">
+                {activeToast.title}
+              </div>
+              <div className="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                {activeToast.message}
+              </div>
             </div>
           </div>
           <button
@@ -222,7 +242,6 @@ function MainApp() {
       <Footer
         onOpenApiDocs={() => dispatch(setApiDocsOpen(true))}
         onOpenTestRunner={() => dispatch(setTestRunnerOpen(true))}
-        onOpenDemoGuide={() => dispatch(setDemoGuideOpen(true))}
       />
 
       {/* Post Editor Modal */}
@@ -259,7 +278,7 @@ function MainApp() {
         isOpen={isDemoGuideOpen}
         onClose={() => dispatch(setDemoGuideOpen(false))}
         onOpenAdmin={() => {
-          dispatch(setCurrentTab('admin'));
+          dispatch(setCurrentTab("admin"));
           dispatch(setSelectedPost(null));
         }}
         onOpenTestRunner={() => dispatch(setTestRunnerOpen(true))}

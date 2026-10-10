@@ -13,7 +13,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
   onClose,
   onNavigatePost,
 }) => {
-  const { notifications, markAllAsRead, clearNotification } = useNotifications();
+  const { notifications, setNotificationsList, markAllAsRead, clearNotification } = useNotifications();
 
   if (!isOpen) return null;
 
@@ -73,11 +73,10 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                     onClose();
                   }
                 }}
-                className={`p-3 rounded-xl border transition-all text-xs cursor-pointer ${
-                  item.read
+                className={`p-3 rounded-xl border transition-all text-xs cursor-pointer ${item.read
                     ? 'border-slate-100 bg-white hover:bg-slate-50 text-slate-600'
                     : 'border-indigo-100 bg-indigo-50/40 hover:bg-indigo-50/70 text-slate-900 font-medium'
-                }`}
+                  }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="flex items-center gap-2">

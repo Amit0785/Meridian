@@ -4,7 +4,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { ENV } from "./server/config/env";
 import { connectDB } from "./server/config/database";
-import { mongooseConnect } from "./server/config/mongooseConnection";
 import userRoute from "./server/routes/userRoute";
 import postRoute from "./server/routes/postRoute";
 import commentRoute from "./server/routes/commentRoute";
@@ -19,8 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
-  // Connect to MongoDB using Mongoose ODM
-  await mongooseConnect();
+  await connectDB();
 
   const app = express();
 

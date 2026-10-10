@@ -1,13 +1,23 @@
-import React from 'react';
-import { Database, Server, Layers, ShieldCheck, Terminal, BookOpen, Video } from 'lucide-react';
+import React from "react";
+import {
+  Database,
+  Server,
+  Layers,
+  ShieldCheck,
+  Terminal,
+  BookOpen,
+  Video,
+} from "lucide-react";
 
 interface FooterProps {
   onOpenApiDocs: () => void;
   onOpenTestRunner: () => void;
-  onOpenDemoGuide?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenApiDocs, onOpenTestRunner, onOpenDemoGuide }) => {
+export const Footer: React.FC<FooterProps> = ({
+  onOpenApiDocs,
+  onOpenTestRunner,
+}) => {
   return (
     <footer className="bg-white border-t border-slate-200 mt-20 text-slate-600 text-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -18,10 +28,14 @@ export const Footer: React.FC<FooterProps> = ({ onOpenApiDocs, onOpenTestRunner,
               <div className="w-6 h-6 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-xs">
                 M
               </div>
-              <span className="font-bold text-slate-900 text-base">Meridian</span>
+              <span className="font-bold text-slate-900 text-base">
+                Meridian
+              </span>
             </div>
             <p className="text-slate-500 leading-relaxed text-xs">
-              Production-grade MERN architecture blog engine implementing JWT authentication, RBAC middleware, soft-delete lifecycles, and relational Mongoose data structures.
+              Production-grade MERN architecture blog engine implementing JWT
+              authentication, RBAC middleware, soft-delete lifecycles, and
+              relational Mongoose data structures.
             </p>
           </div>
 
@@ -74,17 +88,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenApiDocs, onOpenTestRunner,
                   <span>Unit & Integration Test Console</span>
                 </button>
               </li>
-              {onOpenDemoGuide && (
-                <li>
-                  <button
-                    onClick={onOpenDemoGuide}
-                    className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 transition-colors font-medium"
-                  >
-                    <Video className="w-3.5 h-3.5" />
-                    <span>5–10 Min Demo Video Guide</span>
-                  </button>
-                </li>
-              )}
+
               <li className="text-slate-500">
                 <span>Zod Payload Schema Validation</span>
               </li>
@@ -100,17 +104,23 @@ export const Footer: React.FC<FooterProps> = ({ onOpenApiDocs, onOpenTestRunner,
               Access & RBAC Controls
             </div>
             <p className="text-slate-500 leading-relaxed">
-              Two-tiered privilege model enforced via API middleware: Administrator (universal post and user moderation) and Regular Users (author-only CRUD).
+              Two-tiered privilege model enforced via API middleware:
+              Administrator (universal post and user moderation) and Regular
+              Users (author-only CRUD).
             </p>
             <div className="font-mono text-[11px] text-slate-400">
-              API Base: <code className="text-slate-700 bg-slate-100 px-1 py-0.5 rounded">/api/v1</code>
+              API Base:{" "}
+              <code className="text-slate-700 bg-slate-100 px-1 py-0.5 rounded">
+                /api/v1
+              </code>
             </div>
           </div>
         </div>
 
         <div className="border-t border-slate-200 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-[11px]">
           <div>
-            &copy; 2026 Meridian Blog Engine. All rights reserved. Built with MERN Stack.
+            &copy; 2026 Meridian Blog Engine. All rights reserved. Built with
+            MERN Stack.
           </div>
           <div className="flex items-center gap-4">
             <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono font-medium">
