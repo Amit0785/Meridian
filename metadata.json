@@ -1,0 +1,6 @@
+{
+  "name": "Meridian - Modern MERN Stack Blog Platform",
+  "description": "Full-stack MERN blogging application featuring JWT authentication, RBAC, CRUD post and comment management, soft deletes, and administrative control.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

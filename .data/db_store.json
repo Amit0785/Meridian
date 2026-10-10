@@ -1,0 +1,302 @@
+{
+  "users": [
+    {
+      "_id": "usr_admin_001",
+      "name": "Eleanor Vance",
+      "email": "admin@meridian.dev",
+      "passwordHash": "$2b$10$5OihvnsuEorDUeUPEf9gXeGy.KgVEOIwkBCg9dLmy1An6c0uXJpRi",
+      "role": "admin",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "bio": "Staff Systems Architect & Meridian Community Lead.",
+      "provider": "local",
+      "status": "active",
+      "createdAt": "2026-09-09T14:59:36.609Z",
+      "updatedAt": "2026-10-09T14:59:36.610Z"
+    },
+    {
+      "_id": "usr_reg_002",
+      "name": "Julian Chen",
+      "email": "julian@meridian.dev",
+      "passwordHash": "$2b$10$TYJLbCnDw1xTpss25159C.yt/9Tnkab.ir7zUdLudBexY3dMGTuFy",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "bio": "Full-stack engineer interested in distributed data protocols.",
+      "provider": "local",
+      "status": "active",
+      "createdAt": "2026-09-19T14:59:36.610Z",
+      "updatedAt": "2026-10-09T14:59:36.610Z"
+    },
+    {
+      "_id": "usr_reg_003",
+      "name": "Maya Patel",
+      "email": "maya@meridian.dev",
+      "passwordHash": "$2b$10$TYJLbCnDw1xTpss25159C.yt/9Tnkab.ir7zUdLudBexY3dMGTuFy",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+      "bio": "Frontend craftsman, design system contributor, writer.",
+      "provider": "local",
+      "status": "active",
+      "createdAt": "2026-09-24T14:59:36.610Z",
+      "updatedAt": "2026-10-09T14:59:36.610Z"
+    },
+    {
+      "_id": "usr_1791558017718_dcncl",
+      "name": "Google Developer",
+      "email": "google.dev@meridian.io",
+      "passwordHash": "$2b$10$v6UeYeaJqAp6.hM1REEXkufoH9GY4wgerk5j646i9MlAGUlj2rbdi",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=GoogleDeveloper",
+      "bio": "Member via GOOGLE single sign-on",
+      "provider": "google",
+      "status": "active",
+      "createdAt": "2026-10-09T15:00:17.718Z",
+      "updatedAt": "2026-10-09T15:00:17.718Z"
+    },
+    {
+      "_id": "usr_1791558037012_hmle7",
+      "name": "Amit Singh",
+      "email": "amitsingh0785@gmail.com",
+      "passwordHash": "$2b$10$NSJz1Oa0SSiHG1tP297BUeAT7jdq9re2Odyh1y8F8ejdyBaMJ4JbK",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Amit%20Singh",
+      "bio": "Member via GOOGLE single sign-on",
+      "provider": "google",
+      "status": "active",
+      "createdAt": "2026-10-09T15:00:37.012Z",
+      "updatedAt": "2026-10-09T15:00:37.012Z"
+    },
+    {
+      "_id": "usr_1791558385896_gn11z",
+      "name": "Test User",
+      "email": "test.google@meridian.io",
+      "passwordHash": "$2b$10$kQqkX6MeIB0QembM.6K2rOb8mlXee6HUfTDOy4FfVhoOhMnbLBgA2",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Test%20User",
+      "bio": "Member via GOOGLE single sign-on",
+      "provider": "google",
+      "status": "active",
+      "createdAt": "2026-10-09T15:06:25.896Z",
+      "updatedAt": "2026-10-09T15:06:25.896Z"
+    },
+    {
+      "_id": "usr_1791558762020_lng8r",
+      "name": "Google Tester",
+      "email": "google.test@meridian.io",
+      "passwordHash": "$2b$10$kvPkN2/C5C53rcxC4Ki12.QLDlITMN.xZRsSq.3HSt40eafNG3U9a",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Google%20Tester",
+      "bio": "Member via GOOGLE single sign-on",
+      "provider": "google",
+      "status": "active",
+      "createdAt": "2026-10-09T15:12:42.020Z",
+      "updatedAt": "2026-10-09T15:12:42.020Z"
+    },
+    {
+      "_id": "usr_1791558827935_zw3uv",
+      "name": "google user",
+      "email": "google.user@meridian.io",
+      "passwordHash": "$2b$10$uHFk9bKEps96akp8DLZgYOHQh2iNnGV65T55rCdwuHcV7.Z/y1tE.",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=google%20user",
+      "bio": "Member via GOOGLE single sign-on",
+      "provider": "google",
+      "status": "active",
+      "createdAt": "2026-10-09T15:13:47.935Z",
+      "updatedAt": "2026-10-09T15:13:47.935Z"
+    }
+  ],
+  "posts": [
+    {
+      "_id": "post_001",
+      "title": "Architecting Resilient Distributed Systems with Eventual Consistency",
+      "slug": "architecting-resilient-distributed-systems",
+      "content": "### The Challenge of Distributed Invariants\n\nWhen scaling modern backend architectures across global geographical regions, traditional ACID transactions frequently encounter fundamental network latency constraints. In this deep dive, we explore practical patterns for implementing **event-driven choreography**, idempotent messaging queues, and conflict-free replicated data structures.\n\n#### Key Principles\n1. **Network partitions are inevitable**: Design systems to remain available while synchronizing asynchronously.\n2. **Idempotency keys on state transitions**: Every message delivery mechanism must withstand at-least-once delivery guarantees without duplicating transactional operations.\n3. **Outbox pattern with change data capture**: Couple database commits with transactional messaging to prevent dual-write anomalies.\n\n```typescript\nexport interface SagaStep<TContext> {\n  stepName: string;\n  execute: (context: TContext) => Promise<TContext>;\n  compensate: (context: TContext) => Promise<void>;\n}\n```\n\nBy decomposing synchronous RPC calls into durable event streams, applications achieve bounded isolation boundaries and linear scalability.",
+      "excerpt": "Deconstructing real-world strategies for transactional consistency, sagas, and idempotency across decoupled cloud services.",
+      "category": "Architecture",
+      "tags": [
+        "Distributed Systems",
+        "Cloud",
+        "Microservices",
+        "Node.js"
+      ],
+      "author": "usr_admin_001",
+      "isDeleted": false,
+      "deletedAt": null,
+      "views": 1420,
+      "featured": true,
+      "createdAt": "2026-10-03T14:59:36.610Z",
+      "updatedAt": "2026-10-03T14:59:36.610Z"
+    },
+    {
+      "_id": "post_002",
+      "title": "Zero-Pill Design Systems: Elevating Typography in Data-Dense Interfaces",
+      "slug": "zero-pill-design-systems",
+      "content": "### The Anti-Pattern of Metadata Enclosures\n\nA prevalent symptom of cookie-cutter interfaces is the reflexive wrapping of every metadata tag, date, and status inside colored pill capsules. When thirty colorful badges compete for visual attention, visual hierarchy breaks down.\n\n#### The Three Visual Pillars\n- **Unboxed Text Separation**: Use subtle typographic characters (`·`, `/`, `—`) with subdued opacity to group contextual information.\n- **Tabular Figures**: Always format numeric values and counters with monospace tabular alignment (`tabular-nums`) to prevent layout shift.\n- **Restraint Over Decoration**: Let whitespace and vertical rhythm carry the structure rather than borders inside borders.\n\nVisual quietness directly increases reading comprehension and cognitive endurance during complex analytic workflows.",
+      "excerpt": "Why modern digital design is abandoning pill capsules in favor of refined typographic rhythm and deliberate negative space.",
+      "category": "Design & UX",
+      "tags": [
+        "Design Systems",
+        "Typography",
+        "Frontend",
+        "CSS"
+      ],
+      "author": "usr_reg_003",
+      "isDeleted": false,
+      "deletedAt": null,
+      "views": 890,
+      "featured": true,
+      "createdAt": "2026-10-05T14:59:36.610Z",
+      "updatedAt": "2026-10-05T14:59:36.610Z"
+    },
+    {
+      "_id": "post_003",
+      "title": "Production JWT Hygiene: Rotating Refresh Tokens and Hardened Revocation",
+      "slug": "production-jwt-hygiene",
+      "content": "### Securing Modern Stateless Token Lifecycles\n\nJSON Web Tokens (JWT) offer excellent ergonomics for distributed microservices, yet naive implementations introduce severe security vulnerabilities when revocation and lifetime boundaries are overlooked.\n\n#### Essential Production Hardening\n- **Short-Lived Access Tokens**: Keep access tokens strictly bounded to 10–15 minutes.\n- **Refresh Token Rotation**: Each time a refresh token is exchanged, invalidate the previous token and issue a fresh pair.\n- **Cryptographic Fingerprinting**: Bind refresh tokens to client user-agent digests or secure HttpOnly cookies to minimize cross-site exfiltration vectors.\n\nIn our accompanying source code, we demonstrate the Express middleware stack verifying cryptographic claims with granular rate limiting.",
+      "excerpt": "A comprehensive guide to token expiration windows, rotating refresh tokens, and rate-limited authentication boundaries.",
+      "category": "Security",
+      "tags": [
+        "Security",
+        "JWT",
+        "Authentication",
+        "Express"
+      ],
+      "author": "usr_reg_002",
+      "isDeleted": false,
+      "deletedAt": null,
+      "views": 1145,
+      "featured": false,
+      "createdAt": "2026-10-07T14:59:36.610Z",
+      "updatedAt": "2026-10-07T14:59:36.610Z"
+    },
+    {
+      "_id": "post_004",
+      "title": "Deprecated Protocol Migration Notes (Draft Archive)",
+      "slug": "deprecated-protocol-migration-notes",
+      "content": "Internal team notes discussing the sunsetting of legacy v1 REST polling endpoints in favor of real-time server-sent event push notifications. Archived for historical review.",
+      "excerpt": "Internal deprecation audit documenting historical v1 endpoints prior to decommission.",
+      "category": "Engineering",
+      "tags": [
+        "Legacy",
+        "Migration",
+        "Archive"
+      ],
+      "author": "usr_admin_001",
+      "isDeleted": true,
+      "deletedAt": "2026-10-08T14:59:36.610Z",
+      "views": 45,
+      "featured": false,
+      "createdAt": "2026-10-01T14:59:36.610Z",
+      "updatedAt": "2026-10-08T14:59:36.610Z"
+    }
+  ],
+  "comments": [
+    {
+      "_id": "comm_001",
+      "postId": "post_001",
+      "author": "usr_reg_002",
+      "content": "The section on idempotent keys during saga rollbacks is spot on. We implemented a deduplication window with Redis and it saved our transaction throughput.",
+      "isDeleted": false,
+      "createdAt": "2026-10-04T14:59:36.610Z",
+      "updatedAt": "2026-10-04T14:59:36.610Z"
+    },
+    {
+      "_id": "comm_002",
+      "postId": "post_001",
+      "author": "usr_reg_003",
+      "content": "Great architectural breakdown! How do you handle poison pill messages when outbox consumers encounter corrupted payloads?",
+      "isDeleted": false,
+      "createdAt": "2026-10-05T14:59:36.610Z",
+      "updatedAt": "2026-10-05T14:59:36.610Z"
+    },
+    {
+      "_id": "comm_003",
+      "postId": "post_002",
+      "author": "usr_admin_001",
+      "content": "Completely agree on unboxing metadata. Typography carries structural hierarchy much cleaner than border-pill chaos.",
+      "isDeleted": false,
+      "createdAt": "2026-10-06T14:59:36.610Z",
+      "updatedAt": "2026-10-06T14:59:36.610Z"
+    }
+  ],
+  "activityLogs": [
+    {
+      "_id": "log_1791558352998_goox",
+      "action": "USER_LOGIN",
+      "targetType": "auth",
+      "details": "User signed in with julian@meridian.dev",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-10-09T15:05:52.998Z"
+    },
+    {
+      "_id": "log_1791558346285_hn4d",
+      "action": "USER_LOGIN",
+      "targetType": "auth",
+      "details": "User signed in with admin@meridian.dev",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-10-09T15:05:46.285Z"
+    },
+    {
+      "_id": "log_1791558118315_yyex",
+      "action": "SOCIAL_LOGIN",
+      "targetType": "auth",
+      "details": "Social sign-in via google for google.dev@meridian.io",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-10-09T15:01:58.315Z"
+    },
+    {
+      "_id": "log_1791558098106_0qhq",
+      "action": "SOCIAL_LOGIN",
+      "targetType": "auth",
+      "details": "Social sign-in via google for google.dev@meridian.io",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-10-09T15:01:38.106Z"
+    },
+    {
+      "_id": "log_1791558017721_juws",
+      "action": "SOCIAL_LOGIN",
+      "targetType": "auth",
+      "details": "Social sign-in via google for google.dev@meridian.io",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-10-09T15:00:17.721Z"
+    },
+    {
+      "_id": "log_1791558006068_rq0k",
+      "action": "USER_LOGIN",
+      "targetType": "auth",
+      "details": "User signed in with admin@meridian.dev",
+      "ipAddress": "127.0.0.1",
+      "createdAt": "2026-10-09T15:00:06.068Z"
+    },
+    {
+      "_id": "log_001",
+      "action": "USER_REGISTERED",
+      "userId": "usr_admin_001",
+      "userEmail": "admin@meridian.dev",
+      "targetType": "user",
+      "targetId": "usr_admin_001",
+      "details": "Admin root account initialized with administrative privileges.",
+      "createdAt": "2026-09-09T14:59:36.609Z"
+    },
+    {
+      "_id": "log_002",
+      "action": "POST_CREATED",
+      "userId": "usr_admin_001",
+      "userEmail": "admin@meridian.dev",
+      "targetType": "post",
+      "targetId": "post_001",
+      "details": "Published article \"Architecting Resilient Distributed Systems\".",
+      "createdAt": "2026-10-03T14:59:36.610Z"
+    },
+    {
+      "_id": "log_003",
+      "action": "POST_SOFT_DELETED",
+      "userId": "usr_admin_001",
+      "userEmail": "admin@meridian.dev",
+      "targetType": "post",
+      "targetId": "post_004",
+      "details": "Soft-deleted post \"Deprecated Protocol Migration Notes\". Retained in database with isDeleted=true.",
+      "createdAt": "2026-10-08T14:59:36.610Z"
+    }
+  ]
+}
