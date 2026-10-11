@@ -44,8 +44,8 @@ export const fetchCurrentUser = createAsyncThunk(
       Storage.removeItem("refresh-token");
       return rejectWithValue(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to fetch current user",
+          err.message ||
+          "Failed to fetch current user",
       );
     }
   },
@@ -90,8 +90,7 @@ export const registerUser = createAsyncThunk(
       name: string;
       email: string;
       password: string;
-      role?: "admin" | "user";
-      bio?: string;
+      userRole?: "admin" | "user";
     },
     { rejectWithValue },
   ) => {
@@ -234,7 +233,7 @@ export const authSlice = createSlice({
     },
     logoutRequest: (state) => {
       try {
-        firebaseSignOut(firebaseAuth).catch(() => { });
+        firebaseSignOut(firebaseAuth).catch(() => {});
       } catch {
         // Ignore
       }
@@ -262,7 +261,7 @@ export const authSlice = createSlice({
           state.isLoading = false;
           state.user = action.payload;
           state.isAuthenticated = !!action.payload;
-          state.isAdmin = action.payload?.role === "admin";
+          state.isAdmin = action.payload?.userRole === "admin";
           state.error = null;
         },
       )
@@ -285,7 +284,7 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
-        state.isAdmin = action.payload.user.role === "admin";
+        state.isAdmin = action.payload.user.userRole === "admin";
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -305,7 +304,7 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
-        state.isAdmin = action.payload.user.role === "admin";
+        state.isAdmin = action.payload.user.userRole === "admin";
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -336,7 +335,7 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
-        state.isAdmin = action.payload.user.role === "admin";
+        state.isAdmin = action.payload.user.userRole === "admin";
         state.error = null;
       })
       .addCase(socialLoginUser.rejected, (state, action) => {

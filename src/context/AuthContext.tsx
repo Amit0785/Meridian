@@ -28,7 +28,7 @@ interface AuthContextType {
     name: string;
     email: string;
     password: string;
-    role?: "admin" | "user";
+    userRole?: "admin" | "user";
   }) => Promise<void>;
   logout: () => Promise<void>;
   socialLogin: (payload: {
@@ -69,8 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     name: string;
     email: string;
     password: string;
-    role?: "admin" | "user";
-    bio?: string;
+    userRole?: "admin" | "user";
   }) => {
     await dispatch(registerUser(data)).unwrap();
   };

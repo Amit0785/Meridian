@@ -21,7 +21,6 @@ export const connectDB = async () => {
   }
 };
 
-
 /**
  * Disconnect MongoDB cleanly
  */
@@ -34,17 +33,13 @@ export async function disconnectDB(): Promise<void> {
   }
 }
 
-
-
 export interface IUserDoc {
   _id: any;
   name: string;
   email: string;
   passwordHash?: string;
-  role: "admin" | "user";
   userRole?: "admin" | "user";
   avatar?: string;
-  bio?: string;
   provider?: "local" | "google" | "facebook";
   status: "active" | "suspended";
   createdAt: string;
@@ -87,11 +82,3 @@ export interface IActivityLogDoc {
   ipAddress?: string;
   createdAt: string;
 }
-
-
-
-
-
-
-
-

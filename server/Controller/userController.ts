@@ -18,13 +18,12 @@ import { status } from "../utils/status";
  * Register a new user
  */
 export const registerUser = catchAsync(async (req: Request, res: Response) => {
-  const { name, email, password, role, bio } = req.body;
+  const { name, email, password, role } = req.body;
   const result = await AuthService.register({
     name,
     email,
     password,
-    role,
-    bio,
+    userRole: role,
   });
 
   res.cookie("accessToken", result.tokens.accessToken, {

@@ -17,12 +17,8 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const {
-    login,
-    register,
-    signInWithSocialFirebase,
-    switchDemoAccount,
-  } = useAuth();
+  const { login, register, signInWithSocialFirebase, switchDemoAccount } =
+    useAuth();
   const [tab, setTab] = useState<"signin" | "register">("signin");
   const [socialLoading, setSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +31,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       name: "",
       email: "",
       password: "",
-      role: "user" as "admin" | "user",
+      userRole: "user" as "admin" | "user",
     },
     validate: (values) => {
       const schema = tab === "signin" ? loginSchema : registerSchema;
@@ -62,7 +58,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             name: values.name,
             email: values.email,
             password: values.password,
-            role: values.role,
+            userRole: values.userRole,
           });
         }
         handleClose();
@@ -166,10 +162,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 formik.setErrors({});
                 formik.setTouched({});
               }}
-              className={`flex-1 py-3 text-center transition-colors ${tab === "signin"
-                ? "bg-white text-slate-900 border-b-2 border-slate-900"
-                : "text-slate-500 hover:text-slate-900"
-                }`}
+              className={`flex-1 py-3 text-center transition-colors ${
+                tab === "signin"
+                  ? "bg-white text-slate-900 border-b-2 border-slate-900"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
             >
               Sign In
             </button>
@@ -181,10 +178,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 formik.setErrors({});
                 formik.setTouched({});
               }}
-              className={`flex-1 py-3 text-center transition-colors ${tab === "register"
-                ? "bg-white text-slate-900 border-b-2 border-slate-900"
-                : "text-slate-500 hover:text-slate-900"
-                }`}
+              className={`flex-1 py-3 text-center transition-colors ${
+                tab === "register"
+                  ? "bg-white text-slate-900 border-b-2 border-slate-900"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
             >
               Register
             </button>
@@ -280,10 +278,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           )}
 
           {/* Credentials Form */}
-          <form onSubmit={formik.handleSubmit} noValidate className="px-6 pb-6 space-y-3.5">
+          <form
+            onSubmit={formik.handleSubmit}
+            noValidate
+            className="px-6 pb-6 space-y-3.5"
+          >
             {tab === "register" && (
               <div>
-                <label htmlFor="auth-name" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="auth-name"
+                  className="block text-xs font-semibold text-slate-700 mb-1"
+                >
                   Full Name
                 </label>
                 <div className="relative">
@@ -296,10 +301,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     placeholder="e.g. Maya Patel"
-                    className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${formik.touched.name && formik.errors.name
-                      ? "border-rose-400 focus:ring-rose-500"
-                      : "border-slate-200 focus:ring-slate-900"
-                      }`}
+                    className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${
+                      formik.touched.name && formik.errors.name
+                        ? "border-rose-400 focus:ring-rose-500"
+                        : "border-slate-200 focus:ring-slate-900"
+                    }`}
                   />
                 </div>
                 {formik.touched.name && formik.errors.name && (
@@ -311,7 +317,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             )}
 
             <div>
-              <label htmlFor="auth-email" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label
+                htmlFor="auth-email"
+                className="block text-xs font-semibold text-slate-700 mb-1"
+              >
                 Email Address
               </label>
               <div className="relative">
@@ -324,10 +333,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   placeholder="name@domain.com"
-                  className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${formik.touched.email && formik.errors.email
-                    ? "border-rose-400 focus:ring-rose-500"
-                    : "border-slate-200 focus:ring-slate-900"
-                    }`}
+                  className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${
+                    formik.touched.email && formik.errors.email
+                      ? "border-rose-400 focus:ring-rose-500"
+                      : "border-slate-200 focus:ring-slate-900"
+                  }`}
                 />
               </div>
               {formik.touched.email && formik.errors.email && (
@@ -338,7 +348,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <div>
-              <label htmlFor="auth-password" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label
+                htmlFor="auth-password"
+                className="block text-xs font-semibold text-slate-700 mb-1"
+              >
                 Password
               </label>
               <div className="relative">
@@ -351,10 +364,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   placeholder="••••••••"
-                  className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${formik.touched.password && formik.errors.password
-                    ? "border-rose-400 focus:ring-rose-500"
-                    : "border-slate-200 focus:ring-slate-900"
-                    }`}
+                  className={`w-full text-xs bg-slate-50 border rounded-lg pl-9 pr-3 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 ${
+                    formik.touched.password && formik.errors.password
+                      ? "border-rose-400 focus:ring-rose-500"
+                      : "border-slate-200 focus:ring-slate-900"
+                  }`}
                 />
               </div>
               {formik.touched.password && formik.errors.password && (
@@ -366,13 +380,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
             {tab === "register" && (
               <div>
-                <label htmlFor="auth-role" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label
+                  htmlFor="auth-role"
+                  className="block text-xs font-semibold text-slate-700 mb-1"
+                >
                   Assign System Role
                 </label>
                 <select
                   id="auth-role"
                   name="role"
-                  value={formik.values.role}
+                  value={formik.values.userRole}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
@@ -404,4 +421,3 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     </div>
   );
 };
-

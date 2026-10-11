@@ -12,7 +12,7 @@ export const getComments = catchAsync(
   async (req: AuthenticatedRequest, res: Response) => {
     const { postId } = req.params;
 
-    const role = req.user?.userRole || req.user?.role;
+    const role = req.user?.userRole;
     const isAdmin = role === "admin";
 
     const comments = await CommentService.getComments(postId, isAdmin);

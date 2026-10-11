@@ -74,12 +74,12 @@ export const AdminUsersTab: React.FC<AdminUsersTabProps> = ({
                 <td className="px-6 py-4">
                   <span
                     className={`inline-block font-mono text-[10px] px-2 py-0.5 rounded font-bold ${
-                      u.role === "admin"
+                      u.userRole === "admin"
                         ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
                         : "bg-slate-100 text-slate-700"
                     }`}
                   >
-                    {u.role.toUpperCase()}
+                    {u.userRole.toUpperCase()}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -103,12 +103,12 @@ export const AdminUsersTab: React.FC<AdminUsersTabProps> = ({
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => onToggleRole(u._id, u.role)}
+                        onClick={() => onToggleRole(u._id, u.userRole)}
                         disabled={actionLoading}
                         className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors"
                         title="Toggle Admin role"
                       >
-                        {u.role === "admin" ? "Revoke Admin" : "Make Admin"}
+                        {u.userRole === "admin" ? "Revoke Admin" : "Make Admin"}
                       </button>
                       <button
                         onClick={() => onToggleStatus(u._id)}

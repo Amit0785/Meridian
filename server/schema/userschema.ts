@@ -34,10 +34,7 @@ const userSchema = new mongoose.Schema<IUserProps>(
       type: String,
       default: "",
     },
-    bio: {
-      type: String,
-      default: "",
-    },
+
     provider: {
       type: String,
       enum: ["local", "google", "facebook"],
@@ -104,7 +101,6 @@ export async function findUserById(id: string): Promise<any | null> {
   if (!user) return null;
   return {
     ...user,
-    role: (user as any).userRole || (user as any).role,
     passwordHash: (user as any).password,
   };
 }
@@ -114,7 +110,7 @@ export async function findUserByEmail(email: string): Promise<any | null> {
   if (!user) return null;
   return {
     ...user,
-    role: (user as any).userRole || (user as any).role,
+
     passwordHash: (user as any).password,
   };
 }
@@ -136,7 +132,6 @@ export async function findUserOne(
   if (!user) return null;
   return {
     ...user,
-    role: (user as any).userRole || (user as any).role,
     passwordHash: (user as any).password,
   };
 }
@@ -155,7 +150,6 @@ export async function findUsers(
   const users = await User.find(query as any).lean();
   return users.map((user: any) => ({
     ...user,
-    role: user.userRole || user.role,
     passwordHash: user.password,
   }));
 }
@@ -164,10 +158,8 @@ export async function createUserDoc(data: {
   name: string;
   email: string;
   password?: string;
-  role?: "admin" | "user";
   userRole?: "admin" | "user";
   avatar?: string;
-  bio?: string;
   provider?: "local" | "google" | "facebook";
 }): Promise<any> {
   const existing = await User.findOne({ email: data.email.toLowerCase() });
@@ -177,16 +169,16 @@ export async function createUserDoc(data: {
 
   const plainPassword =
     data.password || Math.random().toString(36).substring(2, 10);
-  const role = data.userRole || data.role || "user";
+
   const createPayload: Record<string, any> = {
     name: data.name,
     email: data.email.toLowerCase(),
     password: plainPassword,
-    userRole: role,
+    userRole: data.userRole || "user",
     avatar:
       data.avatar ||
       `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(data.name)}`,
-    bio: data.bio || "",
+
     provider: data.provider || "local",
     status: "active",
   };
@@ -197,7 +189,6 @@ export async function createUserDoc(data: {
       : newUser;
   return {
     ...obj,
-    role: obj.userRole,
     passwordHash: obj.password,
   };
 }
@@ -232,7 +223,6 @@ export async function updateUserById(
   if (!updated) return null;
   return {
     ...updated,
-    role: (updated as any).userRole || (updated as any).role,
     passwordHash: (updated as any).password,
   };
 }
@@ -264,9 +254,7 @@ export function sanitizeUser(user: any) {
   delete sanitized.password;
   delete sanitized.passwordHash;
   delete sanitized.__v;
-  if (!sanitized.role && sanitized.userRole) {
-    sanitized.role = sanitized.userRole;
-  }
+
   return sanitized;
 }
 

@@ -60,12 +60,16 @@ export const swaggerDocument = {
           _id: { type: "string", example: "65f1a0000000000000000001" },
           name: { type: "string", example: "Eleanor Vance" },
           email: { type: "string", example: "admin@meridian.dev" },
-          role: { type: "string", enum: ["admin", "user"], example: "admin" },
+          userRole: {
+            type: "string",
+            enum: ["admin", "user"],
+            example: "admin",
+          },
           avatar: {
             type: "string",
             example: "https://images.unsplash.com/...",
           },
-          bio: { type: "string", example: "Staff Systems Architect" },
+
           status: {
             type: "string",
             enum: ["active", "suspended"],
@@ -127,8 +131,11 @@ export const swaggerDocument = {
           name: { type: "string", example: "Maya Patel" },
           email: { type: "string", example: "maya@meridian.dev" },
           password: { type: "string", example: "password123" },
-          role: { type: "string", enum: ["admin", "user"], default: "user" },
-          bio: { type: "string", example: "Frontend Architect" },
+          userRole: {
+            type: "string",
+            enum: ["admin", "user"],
+            default: "user",
+          },
         },
       },
       LoginPayload: {
@@ -651,9 +658,9 @@ export const swaggerDocument = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["role"],
+                required: ["userRole"],
                 properties: {
-                  role: { type: "string", enum: ["admin", "user"] },
+                  userRole: { type: "string", enum: ["admin", "user"] },
                 },
               },
             },

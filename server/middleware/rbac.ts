@@ -19,7 +19,7 @@ export const requireRole = (...roles: ("admin" | "user")[]) => {
       return;
     }
 
-    const role = req.user.userRole || req.user.role;
+    const role = req.user.userRole;
     if (!roles.includes(role as any)) {
       res.status(403).json({
         success: false,
@@ -67,7 +67,7 @@ export const checkPostOwnershipOrAdmin = async (
       return;
     }
 
-    const role = req.user.userRole || req.user.role;
+    const role = req.user.userRole;
     const isAdmin = role === "admin";
     const authorId =
       typeof post.author === "object" ? post.author._id : post.author;
@@ -125,7 +125,7 @@ export const checkCommentOwnershipOrAdmin = async (
       return;
     }
 
-    const role = req.user.userRole || req.user.role;
+    const role = req.user.userRole;
     const isAdmin = role === "admin";
     const authorId =
       typeof comment.author === "object" ? comment.author._id : comment.author;

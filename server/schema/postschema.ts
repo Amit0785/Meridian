@@ -110,7 +110,7 @@ export async function findPostById(
     filter.isDeleted = false;
   }
   return Post.findOne(filter)
-    .populate("author", "name email avatar userRole role bio")
+    .populate("author", "name email avatar userRole")
     .lean();
 }
 
@@ -123,7 +123,7 @@ export async function findPostBySlug(
     filter.isDeleted = false;
   }
   return Post.findOne(filter)
-    .populate("author", "name email avatar userRole role bio")
+    .populate("author", "name email avatar userRole")
     .lean();
 }
 
@@ -182,7 +182,7 @@ export async function findPostsWithPagination(options: PostFindOptions = {}) {
     .sort(sortObj)
     .skip(skip)
     .limit(limit)
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .lean();
 
   const formattedPosts = posts.map((p) => ({
@@ -191,7 +191,7 @@ export async function findPostsWithPagination(options: PostFindOptions = {}) {
       _id: "unknown",
       name: "Anonymous",
       email: "",
-      role: "user",
+      userRole: "user",
     },
   }));
 
@@ -244,7 +244,7 @@ export async function createPostDoc(data: {
 
   const created = await Post.create(postDoc);
   return Post.findById(created._id)
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .lean();
 }
 
@@ -266,7 +266,7 @@ export async function updatePostById(
   const updated = await Post.findByIdAndUpdate(id, updates, {
     returnDocument: "after",
   })
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .lean();
 
   return updated;
@@ -282,7 +282,7 @@ export async function softDeletePostDoc(id: string): Promise<any | null> {
     { isDeleted: true, deletedAt: new Date() },
     { returnDocument: "after" },
   )
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .lean();
 
   return updated;
@@ -298,7 +298,7 @@ export async function restorePostDoc(id: string): Promise<any | null> {
     { isDeleted: false, deletedAt: null },
     { returnDocument: "after" },
   )
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .lean();
 
   return updated;
@@ -334,7 +334,7 @@ export async function populateOnePost(post: any) {
     return post;
   }
   const populated = await Post.findById(post._id || post)
-    .populate("author", "name email avatar userRole role bio")
+    .populate("author", "name email avatar userRole")
     .lean();
   return populated || post;
 }

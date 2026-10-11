@@ -5,9 +5,7 @@ export interface IUserProps {
   password?: string;
   passwordHash?: string;
   userRole?: "admin" | "user";
-  role?: "admin" | "user";
   avatar?: string;
-  bio?: string;
   provider?: "local" | "google" | "facebook";
   status?: "active" | "suspended";
   createdAt?: Date | string;

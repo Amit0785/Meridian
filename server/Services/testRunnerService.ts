@@ -85,7 +85,7 @@ export async function runFullSuite(): Promise<TestSuiteReport> {
         name: "Test Runner User",
         email: testEmail,
         password: testPass,
-        role: "user",
+        userRole: "user",
       });
 
       if (user.passwordHash === testPass) {
@@ -128,7 +128,7 @@ export async function runFullSuite(): Promise<TestSuiteReport> {
         _id: "65f1a0000000000000000099",
         email: "jwt@meridian.dev",
         name: "JWT Tester",
-        role: "user",
+        userRole: "user",
         status: "active",
       };
 

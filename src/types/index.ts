@@ -2,11 +2,10 @@ export interface User {
   _id: string;
   name: string;
   email: string;
-  role: 'admin' | 'user';
+  userRole: "admin" | "user";
   avatar?: string;
-  bio?: string;
-  status: 'active' | 'suspended';
-  provider?: 'local' | 'google' | 'facebook';
+  status: "active" | "suspended";
+  provider?: "local" | "google" | "facebook";
   createdAt: string;
   updatedAt: string;
   postsCount?: number;
@@ -26,7 +25,7 @@ export interface Post {
     name: string;
     email: string;
     avatar?: string;
-    role?: 'admin' | 'user';
+    userRole?: "admin" | "user";
   };
   isDeleted: boolean;
   deletedAt?: string | null;
@@ -44,7 +43,7 @@ export interface Comment {
     name: string;
     email: string;
     avatar?: string;
-    role?: 'admin' | 'user';
+    userRole?: "admin" | "user";
   };
   content: string;
   isDeleted: boolean;
@@ -59,7 +58,7 @@ export interface ActivityLog {
   action: string;
   userId?: string;
   userEmail?: string;
-  targetType: 'post' | 'comment' | 'user' | 'auth' | 'system';
+  targetType: "post" | "comment" | "user" | "auth" | "system";
   targetId?: string;
   details: string;
   ipAddress?: string;
@@ -81,7 +80,7 @@ export interface PlatformStats {
 
 export interface TestResultItem {
   id: string;
-  testType: 'Unit' | 'Integration';
+  testType: "Unit" | "Integration";
   name: string;
   description: string;
   passed: boolean;
@@ -101,7 +100,7 @@ export interface TestSuiteReport {
 
 export interface NotificationItem {
   id: string;
-  type: 'comment' | 'post' | 'system' | 'admin';
+  type: "comment" | "post" | "system" | "admin";
   title: string;
   message: string;
   targetUrl?: string;

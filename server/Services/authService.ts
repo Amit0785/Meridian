@@ -23,7 +23,6 @@ export interface TokenPair {
 export const generateUserTokens = (user: {
   _id: string;
   email: string;
-  role?: string;
   userRole?: string;
   name?: string;
 }): TokenPair => {
@@ -48,9 +47,7 @@ export async function registerUser(data: {
   name: string;
   email: string;
   password: string;
-  role?: "admin" | "user";
   userRole?: "admin" | "user";
-  bio?: string;
 }) {
   const existing = await findUserByEmail(data.email);
   if (existing) {
@@ -61,14 +58,12 @@ export async function registerUser(data: {
     );
   }
 
-  const role = data.userRole || data.role || "user";
   const user = await createUserDoc({
     name: data.name,
     email: data.email,
     password: data.password,
-    role,
-    userRole: role,
-    bio: data.bio || "",
+    userRole: data.userRole || "user",
+
     provider: "local",
   });
 
@@ -217,9 +212,8 @@ export async function socialLoginUser(data: {
       avatar:
         avatar ||
         `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
-      role: "user",
+      userRole: "user",
       provider: data.provider,
-      bio: `Member via ${data.provider.toUpperCase()} single sign-on`,
     });
   }
 

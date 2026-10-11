@@ -46,7 +46,7 @@ export async function findCommentById(id: string): Promise<any | null> {
     return null;
   }
   return Comment.findOne({ _id: id, isDeleted: false })
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .lean();
 }
 
@@ -56,7 +56,7 @@ export async function findCommentsForPost(postId: string) {
   }
   const comments = await Comment.find({ postId, isDeleted: false })
     .sort({ createdAt: 1 })
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .lean();
 
   return comments.map((c) => ({
@@ -87,7 +87,7 @@ export async function createCommentDoc(data: {
   const created = await Comment.create(commentPayload);
 
   const populated = await Comment.findById(created._id)
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .lean();
 
   return {
@@ -108,7 +108,7 @@ export async function updateCommentById(
   const updated = await Comment.findByIdAndUpdate(id, updates, {
     returnDocument: "after",
   })
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .lean();
 
   if (!updated) return null;
@@ -133,7 +133,7 @@ export async function findAllCommentsPopulated(limit = 50) {
   const comments = await Comment.find()
     .sort({ createdAt: -1 })
     .limit(limit)
-    .populate("author", "name email avatar userRole role")
+    .populate("author", "name email avatar userRole")
     .populate("postId", "title slug")
     .lean();
 

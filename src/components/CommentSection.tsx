@@ -1,32 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { Comment } from '../types';
-import { useAuth } from '../context/AuthContext';
-import { api } from '../lib/api';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import React, { useState, useEffect } from "react";
+import { Comment } from "../types";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../lib/api";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   fetchComments,
   addComment,
   updateComment,
   removeComment,
-} from '../store/slices/postsSlice';
-import { MessageSquare, Send, Edit2, Trash2, Check, X, Shield } from 'lucide-react';
+} from "../store/slices/postsSlice";
+import {
+  MessageSquare,
+  Send,
+  Edit2,
+  Trash2,
+  Check,
+  X,
+  Shield,
+} from "lucide-react";
 
 interface CommentSectionProps {
   postId: string;
   onOpenAuth: () => void;
 }
 
-export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAuth }) => {
+export const CommentSection: React.FC<CommentSectionProps> = ({
+  postId,
+  onOpenAuth,
+}) => {
   const { user, isAdmin, isAuthenticated } = useAuth();
   const dispatch = useAppDispatch();
-  const { comments, commentsLoading: loading, commentsError } = useAppSelector(
-    (state) => state.posts
-  );
+  const {
+    comments,
+    commentsLoading: loading,
+    commentsError,
+  } = useAppSelector((state) => state.posts);
 
-  const [newContent, setNewContent] = useState('');
+  const [newContent, setNewContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
+  const [editContent, setEditContent] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
 
   const error = localError || commentsError;
@@ -49,10 +62,10 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
       });
       if (res.success && res.data) {
         dispatch(addComment(res.data));
-        setNewContent('');
+        setNewContent("");
       }
     } catch (err: any) {
-      setLocalError(err.message || 'Failed to submit comment');
+      setLocalError(err.message || "Failed to submit comment");
     } finally {
       setSubmitting(false);
     }
@@ -74,17 +87,17 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
         setEditingId(null);
       }
     } catch (err: any) {
-      setLocalError(err.message || 'Failed to update comment');
+      setLocalError(err.message || "Failed to update comment");
     }
   };
 
   const handleDelete = async (commentId: string) => {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
+    if (!confirm("Are you sure you want to delete this comment?")) return;
     try {
       await api.delete(`/comments/${commentId}`);
       dispatch(removeComment(commentId));
     } catch (err: any) {
-      setLocalError(err.message || 'Failed to delete comment');
+      setLocalError(err.message || "Failed to delete comment");
     }
   };
 
@@ -108,10 +121,16 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
 
       {/* Add Comment Form */}
       {isAuthenticated ? (
-        <form onSubmit={handleSubmit} className="mb-10 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <form
+          onSubmit={handleSubmit}
+          className="mb-10 bg-slate-50 p-4 rounded-xl border border-slate-200"
+        >
           <div className="flex items-center gap-2 mb-3">
             <img
-              src={user?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.name || 'User')}`}
+              src={
+                user?.avatar ||
+                `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.name || "User")}`
+              }
               alt={user?.name}
               referrerPolicy="no-referrer"
               className="w-6 h-6 rounded-full border border-slate-200 object-cover"
@@ -119,7 +138,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
             <span className="text-xs font-semibold text-slate-800">
               Commenting as {user?.name}
             </span>
-            {user?.role === 'admin' && (
+            {user?.userRole === "admin" && (
               <span className="text-[10px] bg-indigo-50 text-indigo-700 font-mono px-1.5 py-0.5 rounded font-semibold flex items-center gap-1">
                 <Shield className="w-3 h-3" /> ADMIN
               </span>
@@ -127,7 +146,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
           </div>
           <textarea
             value={newContent}
-            onChange={e => setNewContent(e.target.value)}
+            onChange={(e) => setNewContent(e.target.value)}
             placeholder="Share your technical perspective or ask a question..."
             rows={3}
             className="w-full text-sm bg-white border border-slate-200 rounded-lg p-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 placeholder:text-slate-400"
@@ -140,14 +159,15 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
               className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
             >
               <Send className="w-3 h-3" />
-              <span>{submitting ? 'Posting...' : 'Post Comment'}</span>
+              <span>{submitting ? "Posting..." : "Post Comment"}</span>
             </button>
           </div>
         </form>
       ) : (
         <div className="mb-10 p-6 bg-slate-50 rounded-xl border border-slate-200 text-center">
           <p className="text-sm text-slate-600 mb-3">
-            Sign in to participate in the technical discussion and engage with the author.
+            Sign in to participate in the technical discussion and engage with
+            the author.
           </p>
           <button
             onClick={onOpenAuth}
@@ -161,8 +181,11 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
       {/* Comments List */}
       {loading ? (
         <div className="space-y-4">
-          {[1, 2].map(i => (
-            <div key={i} className="animate-pulse p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-2">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="animate-pulse p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-2"
+            >
               <div className="h-4 bg-slate-200 rounded w-1/4"></div>
               <div className="h-3 bg-slate-200 rounded w-3/4"></div>
             </div>
@@ -174,7 +197,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
         </div>
       ) : (
         <div className="space-y-4">
-          {comments.map(comment => {
+          {comments.map((comment) => {
             const isAuthor = user && user._id === comment.author._id;
             const canManage = isAuthor || isAdmin;
             const isEditing = editingId === comment._id;
@@ -187,27 +210,35 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
                 <div className="flex items-center justify-between gap-4 mb-2">
                   <div className="flex items-center gap-2.5">
                     <img
-                      src={comment.author.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(comment.author.name)}`}
+                      src={
+                        comment.author.avatar ||
+                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(comment.author.name)}`
+                      }
                       alt={comment.author.name}
                       referrerPolicy="no-referrer"
                       className="w-7 h-7 rounded-full border border-slate-200 object-cover"
                     />
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-slate-800">{comment.author.name}</span>
-                        {comment.author.role === 'admin' && (
+                        <span className="text-xs font-bold text-slate-800">
+                          {comment.author.name}
+                        </span>
+                        {comment.author.userRole === "admin" && (
                           <span className="text-[10px] bg-indigo-50 text-indigo-700 font-mono px-1 py-0.2 rounded font-semibold">
                             ADMIN
                           </span>
                         )}
                       </div>
                       <div className="text-[11px] text-slate-400">
-                        {new Date(comment.createdAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {new Date(comment.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
                       </div>
                     </div>
                   </div>
@@ -245,7 +276,11 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
                           <button
                             onClick={() => handleDelete(comment._id)}
                             className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
-                            title={isAdmin && !isAuthor ? 'Admin delete' : 'Delete comment'}
+                            title={
+                              isAdmin && !isAuthor
+                                ? "Admin delete"
+                                : "Delete comment"
+                            }
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -259,7 +294,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, onOpenAu
                   <div className="mt-2">
                     <textarea
                       value={editContent}
-                      onChange={e => setEditContent(e.target.value)}
+                      onChange={(e) => setEditContent(e.target.value)}
                       rows={2}
                       className="w-full text-sm bg-white border border-slate-300 rounded p-2 text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
                     />

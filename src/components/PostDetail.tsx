@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { Post } from '../types';
-import { useAuth } from '../context/AuthContext';
-import { CommentSection } from './CommentSection';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Eye, 
-  Edit3, 
-  Trash2, 
-  RotateCcw, 
-  Share2, 
-  Bookmark, 
-  Check, 
-  Clock, 
-  AlertTriangle 
-} from 'lucide-react';
+import React, { useState } from "react";
+import { Post } from "../types";
+import { useAuth } from "../context/AuthContext";
+import { CommentSection } from "./CommentSection";
+import {
+  ArrowLeft,
+  Calendar,
+  Eye,
+  Edit3,
+  Trash2,
+  RotateCcw,
+  Share2,
+  Bookmark,
+  Check,
+  Clock,
+  AlertTriangle,
+} from "lucide-react";
 
 interface PostDetailProps {
   post: Post;
@@ -53,51 +53,62 @@ export const PostDetail: React.FC<PostDetailProps> = ({
 
   // Simple Markdown renderer
   const renderMarkdown = (content: string) => {
-    const paragraphs = content.split('\n\n');
+    const paragraphs = content.split("\n\n");
 
     return paragraphs.map((para, idx) => {
       const trimmed = para.trim();
 
-      if (trimmed.startsWith('### ')) {
+      if (trimmed.startsWith("### ")) {
         return (
           <h3 key={idx} className="text-xl font-bold text-slate-900 mt-8 mb-4">
-            {trimmed.replace('### ', '')}
+            {trimmed.replace("### ", "")}
           </h3>
         );
       }
-      if (trimmed.startsWith('#### ')) {
+      if (trimmed.startsWith("#### ")) {
         return (
           <h4 key={idx} className="text-lg font-bold text-slate-900 mt-6 mb-3">
-            {trimmed.replace('#### ', '')}
+            {trimmed.replace("#### ", "")}
           </h4>
         );
       }
-      if (trimmed.startsWith('```')) {
-        const codeLines = trimmed.split('\n').filter(line => !line.startsWith('```'));
+      if (trimmed.startsWith("```")) {
+        const codeLines = trimmed
+          .split("\n")
+          .filter((line) => !line.startsWith("```"));
         return (
-          <div key={idx} className="my-6 rounded-xl bg-slate-900 text-slate-100 p-5 font-mono text-xs overflow-x-auto shadow-inner border border-slate-800">
+          <div
+            key={idx}
+            className="my-6 rounded-xl bg-slate-900 text-slate-100 p-5 font-mono text-xs overflow-x-auto shadow-inner border border-slate-800"
+          >
             <pre>
-              <code>{codeLines.join('\n')}</code>
+              <code>{codeLines.join("\n")}</code>
             </pre>
           </div>
         );
       }
-      if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-        const items = trimmed.split('\n');
+      if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+        const items = trimmed.split("\n");
         return (
-          <ul key={idx} className="my-4 space-y-2 list-disc list-inside text-slate-700 text-base leading-relaxed pl-2">
+          <ul
+            key={idx}
+            className="my-4 space-y-2 list-disc list-inside text-slate-700 text-base leading-relaxed pl-2"
+          >
             {items.map((item, itemIdx) => (
-              <li key={itemIdx}>{item.replace(/^[-*]\s+/, '')}</li>
+              <li key={itemIdx}>{item.replace(/^[-*]\s+/, "")}</li>
             ))}
           </ul>
         );
       }
       if (/^\d+\.\s/.test(trimmed)) {
-        const items = trimmed.split('\n');
+        const items = trimmed.split("\n");
         return (
-          <ol key={idx} className="my-4 space-y-2 list-decimal list-inside text-slate-700 text-base leading-relaxed pl-2">
+          <ol
+            key={idx}
+            className="my-4 space-y-2 list-decimal list-inside text-slate-700 text-base leading-relaxed pl-2"
+          >
             {items.map((item, itemIdx) => (
-              <li key={itemIdx}>{item.replace(/^\d+\.\s+/, '')}</li>
+              <li key={itemIdx}>{item.replace(/^\d+\.\s+/, "")}</li>
             ))}
           </ol>
         );
@@ -129,14 +140,20 @@ export const PostDetail: React.FC<PostDetailProps> = ({
             className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
             title="Share article link"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Share'}</span>
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+            ) : (
+              <Share2 className="w-3.5 h-3.5" />
+            )}
+            <span>{copied ? "Copied" : "Share"}</span>
           </button>
 
           <button
             onClick={() => setBookmarked(!bookmarked)}
             className={`p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors ${
-              bookmarked ? 'text-indigo-600 bg-indigo-50 border-indigo-200' : 'text-slate-600'
+              bookmarked
+                ? "text-indigo-600 bg-indigo-50 border-indigo-200"
+                : "text-slate-600"
             }`}
             title="Bookmark"
           >
@@ -193,8 +210,11 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
             <span>
-              This post was soft-deleted on{' '}
-              {post.deletedAt ? new Date(post.deletedAt).toLocaleString() : 'recently'}. It is hidden from standard queries.
+              This post was soft-deleted on{" "}
+              {post.deletedAt
+                ? new Date(post.deletedAt).toLocaleString()
+                : "recently"}
+              . It is hidden from standard queries.
             </span>
           </div>
           {canModify && (
@@ -214,7 +234,9 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           <Clock className="w-3.5 h-3.5" />
           <span>{readTimeMin} min read</span>
         </span>
-        <span aria-hidden="true" className="text-slate-300">·</span>
+        <span aria-hidden="true" className="text-slate-300">
+          ·
+        </span>
         <span className="flex items-center gap-1">
           <Eye className="w-3.5 h-3.5" />
           <span className="tabular-nums font-mono">{post.views} views</span>
@@ -234,15 +256,20 @@ export const PostDetail: React.FC<PostDetailProps> = ({
       {/* Author Strip */}
       <div className="flex items-center gap-4 mb-10 p-4 rounded-xl bg-slate-50 border border-slate-200/80">
         <img
-          src={post.author.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(post.author.name)}`}
+          src={
+            post.author.avatar ||
+            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(post.author.name)}`
+          }
           alt={post.author.name}
           referrerPolicy="no-referrer"
           className="w-12 h-12 rounded-full border border-slate-200 object-cover"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h5 className="font-bold text-slate-900 text-sm">{post.author.name}</h5>
-            {post.author.role === 'admin' && (
+            <h5 className="font-bold text-slate-900 text-sm">
+              {post.author.name}
+            </h5>
+            {post.author.userRole === "admin" && (
               <span className="text-[10px] bg-indigo-50 text-indigo-700 font-mono px-1.5 py-0.5 rounded font-semibold">
                 ADMIN
               </span>
@@ -251,11 +278,11 @@ export const PostDetail: React.FC<PostDetailProps> = ({
           <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
             <Calendar className="w-3 h-3" />
             <span>
-              Published{' '}
-              {new Date(post.createdAt).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
+              Published{" "}
+              {new Date(post.createdAt).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
               })}
             </span>
             <span aria-hidden="true">·</span>
