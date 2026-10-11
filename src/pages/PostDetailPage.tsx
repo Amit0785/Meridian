@@ -13,6 +13,7 @@ import {
 } from "../store/slices/postsSlice";
 import { setNewPostOpen, setAuthOpen } from "../store/slices/uiSlice";
 import { PostDetail } from "../components/PostDetail";
+import NoPostFound from "../components/NoPostFound";
 
 export const PostDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -23,7 +24,10 @@ export const PostDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (slug) {
-      if (!selectedPost || (selectedPost.slug !== slug && selectedPost._id !== slug)) {
+      if (
+        !selectedPost ||
+        (selectedPost.slug !== slug && selectedPost._id !== slug)
+      ) {
         dispatch(fetchPostBySlug(slug));
       }
     }
@@ -79,28 +83,15 @@ export const PostDetailPage: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-24 text-center">
         <div className="w-8 h-8 border-3 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-xs text-slate-500 font-mono">Loading publication...</p>
+        <p className="text-xs text-slate-500 font-mono">
+          Loading publication...
+        </p>
       </div>
     );
   }
 
   if (!selectedPost) {
-    return (
-      <div className="max-w-md mx-auto py-24 px-4 text-center">
-        <h3 className="text-lg font-bold text-slate-900 mb-2">
-          Publication Not Found
-        </h3>
-        <p className="text-xs text-slate-500 mb-4">
-          The requested article could not be located or may have been removed.
-        </p>
-        <button
-          onClick={() => navigate("/")}
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
-        >
-          Return to Publications
-        </button>
-      </div>
-    );
+    return <NoPostFound />;
   }
 
   return (

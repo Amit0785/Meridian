@@ -25,6 +25,7 @@ import {
   AdminTrashPostsTab,
   AdminCommentsTab,
 } from "../components/admin";
+import { shallowEqual } from "react-redux";
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ export const AdminDashboard: React.FC = () => {
     loading,
     actionLoading,
     message,
-  } = useAppSelector((state) => state.admin);
+  } = useAppSelector((state) => state.admin, shallowEqual);
 
   const [activeTab, setActiveTab] = useState<AdminDashboardTab>("metrics");
 

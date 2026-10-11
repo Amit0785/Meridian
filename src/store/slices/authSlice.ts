@@ -34,7 +34,6 @@ export const fetchCurrentUser = createAsyncThunk(
       if (!token) return null;
 
       const res = await instance.get(API.auth.me);
-      console.log("fetchCurrentUser response:", res.data.data);
       if (res.data?.success && res.data?.data?.user) {
         return res.data.data.user as User;
       }

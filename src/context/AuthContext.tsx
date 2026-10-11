@@ -17,6 +17,7 @@ import {
 } from "../store/slices/authSlice";
 import { clearAllNotifications } from "../store/slices/notificationsSlice";
 import { User } from "../types";
+import { shallowEqual } from "react-redux";
 
 interface AuthContextType {
   user: User | null;
@@ -31,13 +32,7 @@ interface AuthContextType {
     userRole?: "admin" | "user";
   }) => Promise<void>;
   logout: () => Promise<void>;
-  socialLogin: (payload: {
-    provider: "google" | "facebook";
-    name?: string;
-    email?: string;
-    token?: string;
-    avatar?: string;
-  }) => Promise<void>;
+
   signInWithSocialFirebase: (provider: "google" | "facebook") => Promise<{
     success: boolean;
     cancelled?: boolean;
@@ -55,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const dispatch = useAppDispatch();
   const { user, isAdmin, isAuthenticated, isLoading } = useAppSelector(
     (state) => state.auth,
+    shallowEqual,
   );
 
   useEffect(() => {
@@ -82,16 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     dispatch(clearAllNotifications());
     await dispatch(logoutUser()).unwrap();
-  };
-
-  const socialLogin = async (payload: {
-    provider: "google" | "facebook";
-    name?: string;
-    email?: string;
-    token?: string;
-    avatar?: string;
-  }) => {
-    await dispatch(socialLoginUser(payload)).unwrap();
   };
 
   const signInWithSocialFirebase = async (
@@ -168,7 +154,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         login,
         register,
         logout,
-        socialLogin,
         signInWithSocialFirebase,
         switchDemoAccount,
         refreshUser,
