@@ -41,7 +41,6 @@ export const API = {
   },
   posts: {
     base: "/posts",
-    taxonomy: "/posts/taxonomy",
   },
   comments: {
     base: "/comments",

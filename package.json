@@ -33,6 +33,7 @@
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-redux": "^9.3.0",
+    "react-router-dom": "^7.18.4",
     "swagger-ui-express": "^5.0.1",
     "vite": "^8.3.0",
     "zod": "^4.6.5"

@@ -402,15 +402,6 @@ export const swaggerDocument = {
         },
       },
     },
-    "/posts/taxonomy": {
-      get: {
-        tags: ["Posts"],
-        summary: "Get list of active tags",
-        responses: {
-          200: { description: "Tags list" },
-        },
-      },
-    },
     "/posts/{identifier}": {
       get: {
         tags: ["Posts"],

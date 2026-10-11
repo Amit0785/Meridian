@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNotifications } from "../context/NotificationContext";
 import {
@@ -15,31 +16,47 @@ import {
 } from "lucide-react";
 
 interface NavbarProps {
-  currentTab: "articles" | "admin" | "my-posts";
-  setCurrentTab: (tab: "articles" | "admin" | "my-posts") => void;
+  currentTab?: "articles" | "admin" | "my-posts";
+  setCurrentTab?: (tab: "articles" | "admin" | "my-posts") => void;
   onOpenNewPost: () => void;
   onOpenAuth: () => void;
   onOpenApiDocs: () => void;
   onOpenTestRunner: () => void;
   onOpenNotifications: () => void;
-  onOpenDemoGuide: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  currentTab,
+  currentTab: propCurrentTab,
   setCurrentTab,
   onOpenNewPost,
   onOpenAuth,
   onOpenApiDocs,
   onOpenTestRunner,
   onOpenNotifications,
-  onOpenDemoGuide,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAdmin, isAuthenticated, logout, switchDemoAccount } =
     useAuth();
   const { unreadCount } = useNotifications();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showDemoMenu, setShowDemoMenu] = useState(false);
+
+  // Derive active tab from current URL route pathname
+  const activeTab: "articles" | "admin" | "my-posts" =
+    location.pathname.startsWith("/admin")
+      ? "admin"
+      : location.pathname.startsWith("/my-posts")
+        ? "my-posts"
+        : "articles";
+
+  const handleNavigate = (
+    path: string,
+    tab: "articles" | "admin" | "my-posts",
+  ) => {
+    if (setCurrentTab) setCurrentTab(tab);
+    navigate(path);
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
@@ -47,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Zone 1: Brand Wordmark */}
         <div className="flex items-center gap-3 shrink-0">
           <button
-            onClick={() => setCurrentTab("articles")}
+            onClick={() => handleNavigate("/", "articles")}
             className="flex items-center gap-2.5 text-left focus:outline-none group"
           >
             <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white font-bold text-base shadow-sm group-hover:bg-slate-800 transition-colors">
@@ -67,9 +84,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Zone 2: Navigation Links (Single-Line Text Links) */}
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600">
           <button
-            onClick={() => setCurrentTab("articles")}
+            onClick={() => handleNavigate("/", "articles")}
             className={`whitespace-nowrap transition-colors hover:text-slate-900 pb-0.5 ${
-              currentTab === "articles"
+              activeTab === "articles"
                 ? "text-slate-900 font-semibold border-b-2 border-slate-900"
                 : ""
             }`}
@@ -79,9 +96,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {isAuthenticated && (
             <button
-              onClick={() => setCurrentTab("my-posts")}
+              onClick={() => handleNavigate("/my-posts", "my-posts")}
               className={`whitespace-nowrap transition-colors hover:text-slate-900 pb-0.5 ${
-                currentTab === "my-posts"
+                activeTab === "my-posts"
                   ? "text-slate-900 font-semibold border-b-2 border-slate-900"
                   : ""
               }`}
@@ -92,9 +109,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {isAdmin && (
             <button
-              onClick={() => setCurrentTab("admin")}
+              onClick={() => handleNavigate("/admin", "admin")}
               className={`flex items-center gap-1.5 whitespace-nowrap transition-colors hover:text-slate-900 pb-0.5 ${
-                currentTab === "admin"
+                activeTab === "admin"
                   ? "text-indigo-600 font-semibold border-b-2 border-indigo-600"
                   : "text-slate-700"
               }`}
@@ -110,14 +127,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>API Docs</span>
-          </button>
-
-          <button
-            onClick={onOpenDemoGuide}
-            className="hidden xl:flex items-center gap-1.5 whitespace-nowrap transition-colors hover:text-slate-900"
-          >
-            <Video className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Demo Guide</span>
           </button>
 
           <button
@@ -282,7 +291,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                   <button
                     onClick={() => {
-                      setCurrentTab("my-posts");
+                      handleNavigate("/my-posts", "my-posts");
                       setShowUserMenu(false);
                     }}
                     className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
@@ -294,7 +303,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {isAdmin && (
                     <button
                       onClick={() => {
-                        setCurrentTab("admin");
+                        handleNavigate("/admin", "admin");
                         setShowUserMenu(false);
                       }}
                       className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-indigo-600 font-medium"

@@ -1,86 +1,179 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Post, Pagination } from '../types';
-import { api } from '../lib/api';
-import { PostCard } from '../components/PostCard';
-import { Search, ChevronLeft, ChevronRight, PenSquare, Filter } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from "react";
+import { Post } from "../types";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { fetchPosts, setPage } from "../store/slices/postsSlice";
+import { debounce } from "../utils/debounce";
+import { PostCard } from "../components/PostCard";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  PenSquare,
+  Filter,
+  X,
+  RotateCcw,
+  Loader2,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import {
+  setSelectedPost,
+  setEditingPost,
+  softDeletePostThunk,
+  restorePostThunk,
+} from "../store/slices/postsSlice";
+import { setNewPostOpen, setAuthOpen } from "../store/slices/uiSlice";
+import { shallowEqual } from "react-redux";
 
-interface HomePageProps {
-  onSelectPost: (post: Post) => void;
-  onEditPost: (post: Post) => void;
-  onDeletePost: (post: Post) => void;
-  onRestorePost: (post: Post) => void;
-  onOpenNewPost: () => void;
-}
+const LIMIT = 6; // Number of posts per page
 
-export const HomePage: React.FC<HomePageProps> = ({
-  onSelectPost,
-  onEditPost,
-  onDeletePost,
-  onRestorePost,
-  onOpenNewPost,
-}) => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 1,
-    limit: 6,
-    totalCount: 0,
-    totalPages: 1,
-    hasNextPage: false,
-    hasPrevPage: false,
-  });
-  const [search, setSearch] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string>('All');
-  const [tags, setTags] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAuth();
+  const { posts, pagination, loading, error } = useAppSelector(
+    (state) => state.posts,
+    shallowEqual,
+  );
 
-  // Fetch Taxonomy (tags)
-  useEffect(() => {
-    api.get('/posts/taxonomy')
-      .then(res => {
-        if (res.success && res.data?.tags) {
-          setTags(['All', ...res.data.tags]);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const handleSelectPost = (post: Post) => {
+    dispatch(setSelectedPost(post));
+    navigate(`/posts/${encodeURIComponent(post.slug || post._id)}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-  // Fetch Posts
-  const fetchPosts = useCallback(async (pageToLoad = 1) => {
+  const handleEditPost = (post: Post) => {
+    dispatch(setEditingPost(post));
+    dispatch(setNewPostOpen(true));
+  };
+
+  const handleDeletePost = async (post: Post) => {
+    if (!confirm(`Are you sure you want to move "${post.title}" to trash?`))
+      return;
     try {
-      setLoading(true);
-      setError(null);
-      const params = new URLSearchParams();
-      params.append('page', pageToLoad.toString());
-      params.append('limit', '6');
-
-      if (selectedTag && selectedTag !== 'All') {
-        params.append('tag', selectedTag);
-      }
-      if (search.trim()) {
-        params.append('search', search.trim());
-      }
-
-      const res = await api.get(`/posts?${params.toString()}`);
-      if (res.success) {
-        setPosts(res.data);
-        if (res.pagination) {
-          setPagination(res.pagination);
-        }
-      }
+      await dispatch(softDeletePostThunk(post._id)).unwrap();
     } catch (err: any) {
-      setError(err.message || 'Failed to load publications');
-    } finally {
-      setLoading(false);
+      alert(err.message || "Failed to soft delete post");
     }
-  }, [selectedTag, search]);
+  };
 
+  const handleRestorePost = async (post: Post) => {
+    try {
+      await dispatch(restorePostThunk(post._id)).unwrap();
+    } catch (err: any) {
+      alert(err.message || "Failed to restore post");
+    }
+  };
+
+  const handleOpenNewPost = () => {
+    if (!isAuthenticated) {
+      dispatch(setAuthOpen(true));
+    } else {
+      dispatch(setEditingPost(null));
+      dispatch(setNewPostOpen(true));
+    }
+  };
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Debounce function instance for search queries (400ms delay)
+  const debouncedSearchFn = useMemo(
+    () =>
+      debounce((val: string) => {
+        setDebouncedSearch(val.trim());
+        setCurrentPage(1);
+      }, 400),
+    [],
+  );
+
+  // Cancel any pending debounce timer on component unmount
   useEffect(() => {
-    fetchPosts(1);
-  }, [fetchPosts]);
+    return () => {
+      debouncedSearchFn.cancel();
+    };
+  }, [debouncedSearchFn]);
 
-  const featuredPost = posts.find(p => p.featured) || posts[0];
-  const regularPosts = featuredPost ? posts.filter(p => p._id !== featuredPost._id) : posts;
+  // Fetch posts immediately when search or currentPage changes
+  useEffect(() => {
+    dispatch(fetchPosts({ page: currentPage, limit: LIMIT, search: search }));
+  }, [dispatch, currentPage, search]);
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    debouncedSearchFn(val);
+  };
+
+  const handleClearSearch = () => {
+    debouncedSearchFn.cancel();
+    setSearch("");
+    setDebouncedSearch("");
+    setCurrentPage(1);
+    dispatch(setPage(1));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (
+      !pagination ||
+      newPage < 1 ||
+      newPage > pagination.totalPages ||
+      newPage === pagination.page
+    ) {
+      return;
+    }
+    setCurrentPage(newPage);
+    dispatch(setPage(newPage));
+
+    // Smooth scroll to top of publications list
+    const anchor = document.getElementById("publications-top");
+    if (anchor) {
+      anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 380, behavior: "smooth" });
+    }
+  };
+
+  const isDebouncing = search.trim() !== debouncedSearch;
+
+  // Generate smart pagination page numbers with ellipses
+  const getPageNumbers = () => {
+    if (!pagination || pagination.totalPages <= 1) return [];
+    const total = pagination.totalPages;
+    const current = pagination.page;
+
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    const pages: (number | string)[] = [];
+    pages.push(1);
+
+    if (current > 3) {
+      pages.push("...");
+    }
+
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+
+    for (let i = start; i <= end; i++) {
+      if (!pages.includes(i)) {
+        pages.push(i);
+      }
+    }
+
+    if (current < total - 2) {
+      pages.push("...");
+    }
+
+    if (!pages.includes(total)) {
+      pages.push(total);
+    }
+
+    return pages;
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
@@ -96,59 +189,91 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
           <h1
             className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1] mb-5"
-            style={{ textWrap: 'balance' }}
+            style={{ textWrap: "balance" }}
           >
             Engineering publications for systems architects.
           </h1>
           <p className="text-lg text-slate-600 leading-relaxed max-w-2xl">
-            A production blog engine crafted with full MongoDB ODM semantics, JWT access &amp; refresh token lifecycles, and strict role-based access control.
+            A production blog engine crafted with full MongoDB ODM semantics,
+            JWT access &amp; refresh token lifecycles, and strict role-based
+            access control.
           </p>
         </div>
       </section>
 
+      {/* Anchor for pagination scroll */}
+      <div id="publications-top" className="scroll-mt-6" />
+
       {/* Interactive Controls & Filter Bar */}
       <section className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        {/* Tags filter if available */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
-          {tags.length > 0 && tags.map(tag => (
-            <button
-              key={tag}
-              onClick={() => setSelectedTag(tag)}
-              className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
-                selectedTag === tag
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+            Latest Publications
+          </h2>
+          {pagination && pagination.totalCount > 0 && (
+            <p className="text-xs text-slate-500 mt-0.5">
+              Showing page {pagination.page} of {pagination.totalPages} (
+              {pagination.totalCount} total)
+            </p>
+          )}
         </div>
 
-        {/* Search Bar */}
-        <div className="relative min-w-[260px] md:w-72">
+        {/* Search Bar (Anchored Right) */}
+        <div className="relative min-w-[260px] md:w-72 md:ml-auto">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
           <input
             type="text"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search publications..."
-            className="w-full text-xs bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all shadow-xs"
+            className="w-full text-xs bg-white border border-slate-200 rounded-xl pl-9 pr-14 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all shadow-xs"
           />
+          <div className="absolute right-2.5 top-2.5 flex items-center gap-1.5">
+            {isDebouncing && (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+            )}
+            {search && (
+              <button
+                onClick={handleClearSearch}
+                title="Clear search"
+                className="text-slate-400 hover:text-slate-700 p-0.5 rounded transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
+      {/* Error state */}
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
-          {error}
+        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={() =>
+              dispatch(
+                fetchPosts({
+                  page: currentPage,
+                  limit: LIMIT,
+                  search: debouncedSearch,
+                }),
+              )
+            }
+            className="inline-flex items-center gap-1 font-semibold hover:underline"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Retry
+          </button>
         </div>
       )}
 
       {/* Posts Section */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map(n => (
-            <div key={n} className="bg-white border border-slate-200 rounded-xl p-6 h-64 animate-pulse flex flex-col justify-between">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <div
+              key={n}
+              className="bg-white border border-slate-200 rounded-xl p-6 h-64 animate-pulse flex flex-col justify-between"
+            >
               <div className="space-y-3">
                 <div className="h-4 bg-slate-100 rounded w-1/3"></div>
                 <div className="h-6 bg-slate-200 rounded w-4/5"></div>
@@ -164,76 +289,137 @@ export const HomePage: React.FC<HomePageProps> = ({
             <Filter className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="text-base font-bold text-slate-900">No publications found</h4>
+            <h4 className="text-base font-bold text-slate-900">
+              No publications found
+            </h4>
             <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-              {search
-                ? `No articles matched query "${search}". Try clearing your search.`
-                : 'No articles exist yet. Be the first to publish one!'}
+              {debouncedSearch
+                ? `No articles matched query "${debouncedSearch}". Try clearing your search.`
+                : "No articles exist yet. Be the first to publish one!"}
             </p>
           </div>
-          <button
-            onClick={onOpenNewPost}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 transition-colors shadow-sm"
-          >
-            <PenSquare className="w-3.5 h-3.5" />
-            <span>Write First Story</span>
-          </button>
+          {search ? (
+            <button
+              onClick={handleClearSearch}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <span>Clear Filter</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleOpenNewPost}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <PenSquare className="w-3.5 h-3.5" />
+              <span>Write First Story</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Featured Post Card (Hero) */}
-          {featuredPost && pagination.page === 1 && !search && selectedTag === 'All' && (
-            <div className="mb-8">
-              <PostCard
-                post={featuredPost}
-                featured={true}
-                onSelect={() => onSelectPost(featuredPost)}
-                onEdit={() => onEditPost(featuredPost)}
-                onDelete={() => onDeletePost(featuredPost)}
-                onRestore={() => onRestorePost(featuredPost)}
-              />
-            </div>
-          )}
-
           {/* Regular Posts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(pagination.page === 1 && !search && selectedTag === 'All' ? regularPosts : posts).map(post => (
+            {posts.map((post) => (
               <PostCard
                 key={post._id}
                 post={post}
                 featured={false}
-                onSelect={() => onSelectPost(post)}
-                onEdit={() => onEditPost(post)}
-                onDelete={() => onDeletePost(post)}
-                onRestore={() => onRestorePost(post)}
+                onSelect={() => handleSelectPost(post)}
+                onEdit={() => handleEditPost(post)}
+                onDelete={() => handleDeletePost(post)}
+                onRestore={() => handleRestorePost(post)}
               />
             ))}
           </div>
 
-          {/* Pagination Bar */}
-          {pagination.totalPages > 1 && (
-            <div className="pt-8 border-t border-slate-200 flex items-center justify-between">
-              <p className="text-xs text-slate-500">
-                Page <span className="font-semibold text-slate-900">{pagination.page}</span> of{' '}
-                <span className="font-semibold text-slate-900">{pagination.totalPages}</span> ({pagination.totalCount} total)
+          {/* Interactive Pagination Bar */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-slate-500 order-2 sm:order-1">
+                Showing page{" "}
+                <span className="font-semibold text-slate-900">
+                  {pagination.page}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold text-slate-900">
+                  {pagination.totalPages}
+                </span>{" "}
+                <span className="text-slate-400">
+                  ({pagination.totalCount}{" "}
+                  {pagination.totalCount === 1 ? "publication" : "publications"}
+                  )
+                </span>
               </p>
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-1.5 order-1 sm:order-2 flex-wrap justify-center">
+                {/* Jump to first page */}
+                {pagination.page > 2 && pagination.totalPages > 4 && (
+                  <button
+                    onClick={() => handlePageChange(1)}
+                    title="First Page"
+                    className="p-1.5 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs"
+                  >
+                    <ChevronsLeft className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* Previous Page */}
                 <button
                   disabled={!pagination.hasPrevPage}
-                  onClick={() => fetchPosts(pagination.page - 1)}
-                  className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none inline-flex items-center gap-1 transition-colors"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none inline-flex items-center gap-1 transition-colors shadow-xs"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Previous</span>
                 </button>
+
+                {/* Numbered Page Buttons */}
+                <div className="hidden sm:flex items-center gap-1">
+                  {getPageNumbers().map((pageItem, idx) =>
+                    pageItem === "..." ? (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="px-2 text-xs text-slate-400 select-none"
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={`page-${pageItem}`}
+                        onClick={() => handlePageChange(pageItem as number)}
+                        className={`min-w-[32px] h-8 px-2 text-xs font-semibold rounded-lg transition-all shadow-xs ${
+                          pagination.page === pageItem
+                            ? "bg-slate-900 text-white shadow-slate-900/10"
+                            : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                        }`}
+                      >
+                        {pageItem}
+                      </button>
+                    ),
+                  )}
+                </div>
+
+                {/* Next Page */}
                 <button
                   disabled={!pagination.hasNextPage}
-                  onClick={() => fetchPosts(pagination.page + 1)}
-                  className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none inline-flex items-center gap-1 transition-colors"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none inline-flex items-center gap-1 transition-colors shadow-xs"
                 >
                   <span>Next</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
+
+                {/* Jump to last page */}
+                {pagination.page < pagination.totalPages - 1 &&
+                  pagination.totalPages > 4 && (
+                    <button
+                      onClick={() => handlePageChange(pagination.totalPages)}
+                      title="Last Page"
+                      className="p-1.5 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-xs"
+                    >
+                      <ChevronsRight className="w-4 h-4" />
+                    </button>
+                  )}
               </div>
             </div>
           )}
@@ -242,3 +428,5 @@ export const HomePage: React.FC<HomePageProps> = ({
     </div>
   );
 };
+
+export default HomePage;

@@ -172,7 +172,7 @@ meridian/
     │   ├── hooks.ts                     # Typed useAppDispatch & useAppSelector hooks
     │   └── slices/
     │       ├── authSlice.ts             # User session, JWT tokens, login/register thunks
-    │       ├── postsSlice.ts            # Posts state, taxonomy, comments thunks
+    │       ├── postsSlice.ts            # Posts state, comments thunks
     │       ├── adminSlice.ts            # Centralized admin dashboard state & management thunks
     │       ├── notificationsSlice.ts    # SSE real-time notification items
     │       └── uiSlice.ts               # Navigation state & modal visibility flags
@@ -246,7 +246,6 @@ meridian/
   - `author`: Mongoose `ObjectId` referencing the `User` collection.
   - `timestamps`: Native MongoDB timestamps (`createdAt`, `updatedAt`).
   - `slug`: URL-friendly kebab-case slug generated automatically (e.g., `/post/building-resilient-microservices`). Resolves collisions by appending numerical suffixes.
-  - `tags`: Array of string taxonomy tags.
   - `isDeleted` & `deletedAt`: Soft-delete status and timestamp.
 - **Soft Deletes**: Deleting a post sets `isDeleted: true` and records `deletedAt: new Date()`. The post is immediately hidden from the public feed while preserved in the database.
 - **Restoration & Purge**:
@@ -376,7 +375,7 @@ Or click the **"Test Suite"** button in the app header/footer to run tests inter
 - **React 19**: Built with functional components and modern React hooks (`useState`, `useEffect`, `useCallback`, `useMemo`).
 - **Centralized Redux Toolkit (`@reduxjs/toolkit`)**:
   - **`authSlice`**: Stores user session, tokens, login/register/logout thunks.
-  - **`postsSlice`**: Manages publication feed, active post, taxonomy tags, and post comments.
+  - **`postsSlice`**: Manages publication feed, active post, and post comments.
   - **`adminSlice`**: Manages metrics, users directory, trash posts, comment moderation, and audit logs.
   - **`notificationsSlice`**: Receives live event payloads from the SSE stream.
   - **`uiSlice`**: Manages active tabs and modal dialog visibility.
@@ -550,7 +549,6 @@ Meridian includes built-in interactive **Swagger OpenAPI 3.0** documentation:
 | `POST`   | `/api/v1/auth/social-login`      | Google / Facebook OAuth single sign-on         | Public                |
 | `GET`    | `/api/v1/auth/me`                | Retrieve profile of authenticated user         | Authenticated         |
 | `GET`    | `/api/v1/posts`                  | List posts (supports pagination, search, tags) | Public                |
-| `GET`    | `/api/v1/posts/taxonomy`         | List active taxonomy tags                      | Public                |
 | `GET`    | `/api/v1/posts/:slugOrId`        | Retrieve single post by slug or ID             | Public                |
 | `POST`   | `/api/v1/posts`                  | Create new post with automated slug            | Authenticated         |
 | `PUT`    | `/api/v1/posts/:id`              | Update post content                            | Owner or Admin        |

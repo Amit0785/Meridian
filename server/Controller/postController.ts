@@ -169,21 +169,6 @@ export const hardDeletePost = catchAsync(
   },
 );
 
-/**
- * Get post tags taxonomy
- */
-export const getTaxonomy = catchAsync(
-  async (_req: AuthenticatedRequest, res: Response) => {
-    const taxonomy = await PostService.getTaxonomy();
-
-    res.status(status.OK).json({
-      success: true,
-      statusCode: status.OK,
-      data: taxonomy,
-    });
-  },
-);
-
 // Backward compatibility controller object
 export const PostController = {
   listPosts,
@@ -193,7 +178,6 @@ export const PostController = {
   softDeletePost,
   restorePost,
   hardDeletePost,
-  getTaxonomy,
 };
 
 export default PostController;

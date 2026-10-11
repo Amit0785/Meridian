@@ -1,30 +1,31 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface UIState {
-  currentTab: 'articles' | 'admin' | 'my-posts';
+  currentTab: "articles" | "admin" | "my-posts";
   isNewPostOpen: boolean;
   isAuthOpen: boolean;
   isApiDocsOpen: boolean;
   isTestRunnerOpen: boolean;
   isNotificationsOpen: boolean;
-  isDemoGuideOpen: boolean;
 }
 
 const initialState: UIState = {
-  currentTab: 'articles',
+  currentTab: "articles",
   isNewPostOpen: false,
   isAuthOpen: false,
   isApiDocsOpen: false,
   isTestRunnerOpen: false,
   isNotificationsOpen: false,
-  isDemoGuideOpen: false,
 };
 
 export const uiSlice = createSlice({
-  name: 'ui',
+  name: "ui",
   initialState,
   reducers: {
-    setCurrentTab: (state, action: PayloadAction<'articles' | 'admin' | 'my-posts'>) => {
+    setCurrentTab: (
+      state,
+      action: PayloadAction<"articles" | "admin" | "my-posts">,
+    ) => {
       state.currentTab = action.payload;
     },
     setNewPostOpen: (state, action: PayloadAction<boolean>) => {
@@ -42,9 +43,6 @@ export const uiSlice = createSlice({
     setNotificationsOpen: (state, action: PayloadAction<boolean>) => {
       state.isNotificationsOpen = action.payload;
     },
-    setDemoGuideOpen: (state, action: PayloadAction<boolean>) => {
-      state.isDemoGuideOpen = action.payload;
-    },
   },
 });
 
@@ -55,7 +53,6 @@ export const {
   setApiDocsOpen,
   setTestRunnerOpen,
   setNotificationsOpen,
-  setDemoGuideOpen,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;

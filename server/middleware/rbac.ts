@@ -129,7 +129,8 @@ export const checkCommentOwnershipOrAdmin = async (
     const isAdmin = role === "admin";
     const authorId =
       typeof comment.author === "object" ? comment.author._id : comment.author;
-    const isOwner = authorId === req.user._id;
+
+    const isOwner = authorId?.toString() === req.user._id?.toString();
 
     if (!isAdmin && !isOwner) {
       res.status(403).json({

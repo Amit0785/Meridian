@@ -2,12 +2,19 @@ import React, { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import { Post } from "../types";
 import { postEditorSchema } from "../validations/postValidation";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  createPostThunk,
+  updatePostThunk,
+  setEditingPost,
+} from "../store/slices/postsSlice";
+import { setNewPostOpen } from "../store/slices/uiSlice";
 import { X, Globe, Eye, FileText, Check } from "lucide-react";
 
 interface PostEditorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: {
+  isOpen?: boolean;
+  onClose?: () => void;
+  onSubmit?: (data: {
     title: string;
     content: string;
     excerpt?: string;
@@ -22,15 +29,30 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
   onSubmit,
   initialData,
 }) => {
+  const dispatch = useAppDispatch();
+  const isNewPostOpen = useAppSelector((state) => state.ui.isNewPostOpen);
+  const editingPost = useAppSelector((state) => state.posts.editingPost);
+
+  const modalIsOpen = isOpen !== undefined ? isOpen : isNewPostOpen;
+  const effectiveInitialData =
+    initialData !== undefined ? initialData : editingPost;
+
+  const handleClose =
+    onClose ||
+    (() => {
+      dispatch(setNewPostOpen(false));
+      dispatch(setEditingPost(null));
+    });
+
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const [error, setError] = useState<string | null>(null);
 
   const formik = useFormik({
     initialValues: {
-      title: initialData?.title || "",
-      content: initialData?.content || "",
-      excerpt: initialData?.excerpt || "",
-      featured: initialData?.featured || false,
+      title: effectiveInitialData?.title || "",
+      content: effectiveInitialData?.content || "",
+      excerpt: effectiveInitialData?.excerpt || "",
+      featured: effectiveInitialData?.featured || false,
     },
     enableReinitialize: true,
     validate: (values) => {
@@ -51,14 +73,28 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
       setError(null);
 
       try {
-        await onSubmit({
+        const payload = {
           title: values.title.trim(),
           content: values.content.trim(),
           excerpt: values.excerpt.trim() || undefined,
-
           featured: values.featured,
-        });
-        onClose();
+        };
+
+        if (onSubmit) {
+          await onSubmit(payload);
+        } else {
+          if (effectiveInitialData) {
+            await dispatch(
+              updatePostThunk({
+                id: effectiveInitialData._id,
+                postData: payload,
+              }),
+            ).unwrap();
+          } else {
+            await dispatch(createPostThunk(payload)).unwrap();
+          }
+        }
+        handleClose();
       } catch (err: any) {
         setError(err.message || "Failed to save publication");
       } finally {
@@ -68,22 +104,21 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
   });
 
   useEffect(() => {
-    if (isOpen) {
+    if (modalIsOpen) {
       formik.resetForm({
         values: {
-          title: initialData?.title || "",
-          content: initialData?.content || "",
-          excerpt: initialData?.excerpt || "",
-
-          featured: initialData?.featured || false,
+          title: effectiveInitialData?.title || "",
+          content: effectiveInitialData?.content || "",
+          excerpt: effectiveInitialData?.excerpt || "",
+          featured: effectiveInitialData?.featured || false,
         },
       });
       setError(null);
       setActiveTab("write");
     }
-  }, [isOpen, initialData]);
+  }, [modalIsOpen, effectiveInitialData]);
 
-  if (!isOpen) return null;
+  if (!modalIsOpen) return null;
 
   // Real-time slug preview generator
   const slugPreview =
@@ -101,7 +136,7 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-900">
-              {initialData ? "Edit Publication" : "Write a New Story"}
+              {effectiveInitialData ? "Edit Publication" : "Write a New Story"}
             </h3>
             <p className="text-xs text-slate-500 font-mono flex items-center gap-1.5 mt-0.5">
               <Globe className="w-3.5 h-3.5 text-indigo-500" />
@@ -109,7 +144,7 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
@@ -284,7 +319,7 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 rounded-lg transition-colors"
           >
             Cancel
@@ -299,7 +334,7 @@ export const PostEditorModal: React.FC<PostEditorModalProps> = ({
             <span>
               {formik.isSubmitting
                 ? "Saving..."
-                : initialData
+                : effectiveInitialData
                   ? "Update Story"
                   : "Publish Story"}
             </span>

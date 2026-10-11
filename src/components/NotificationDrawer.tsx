@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../context/NotificationContext';
 import { X, CheckCheck, Bell, MessageSquare, PenSquare, ShieldAlert, Info } from 'lucide-react';
 
@@ -13,6 +14,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
   onClose,
   onNavigatePost,
 }) => {
+  const navigate = useNavigate();
   const { notifications, setNotificationsList, markAllAsRead, clearNotification } = useNotifications();
 
   if (!isOpen) return null;
@@ -67,9 +69,13 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
               <div
                 key={item.id}
                 onClick={() => {
-                  if (item.targetUrl && onNavigatePost) {
+                  if (item.targetUrl) {
                     const slug = item.targetUrl.replace('/post/', '');
-                    onNavigatePost(slug);
+                    if (onNavigatePost) {
+                      onNavigatePost(slug);
+                    } else {
+                      navigate(`/posts/${encodeURIComponent(slug)}`);
+                    }
                     onClose();
                   }
                 }}

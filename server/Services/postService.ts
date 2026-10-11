@@ -10,21 +10,29 @@ import {
   restorePostDoc,
   hardDeletePostDoc,
   PostFindOptions,
-} from '../schema/postschema';
-import { AppError } from '../middleware/errorHandler';
+} from "../schema/postschema";
+import { AppError } from "../middleware/errorHandler";
 
 export async function listPostsService(options: PostFindOptions = {}) {
   return findPostsWithPagination(options);
 }
 
-export async function getPostService(identifier: string, includeDeleted = false, trackView = false) {
+export async function getPostService(
+  identifier: string,
+  includeDeleted = false,
+  trackView = false,
+) {
   let post = await findPostBySlug(identifier, includeDeleted);
   if (!post) {
     post = await findPostById(identifier, includeDeleted);
   }
 
   if (!post) {
-    throw new AppError('Blog post not found or has been removed', 404, 'POST_NOT_FOUND');
+    throw new AppError(
+      "Blog post not found or has been removed",
+      404,
+      "POST_NOT_FOUND",
+    );
   }
 
   if (trackView) {
@@ -42,7 +50,7 @@ export async function createPostService(
     excerpt?: string;
     coverImage?: string;
   },
-  authorId: string
+  authorId: string,
 ) {
   const created = await createPostDoc({
     ...data,
@@ -59,11 +67,11 @@ export async function updatePostService(
     content?: string;
     excerpt?: string;
     coverImage?: string;
-  }
+  },
 ) {
   const updated = await updatePostById(id, updates);
   if (!updated) {
-    throw new AppError('Post not found', 404, 'POST_NOT_FOUND');
+    throw new AppError("Post not found", 404, "POST_NOT_FOUND");
   }
   return populateOnePost(updated);
 }
@@ -71,7 +79,7 @@ export async function updatePostService(
 export async function softDeletePostService(id: string) {
   const deleted = await softDeletePostDoc(id);
   if (!deleted) {
-    throw new AppError('Post not found', 404, 'POST_NOT_FOUND');
+    throw new AppError("Post not found", 404, "POST_NOT_FOUND");
   }
   return populateOnePost(deleted);
 }
@@ -79,7 +87,7 @@ export async function softDeletePostService(id: string) {
 export async function restorePostService(id: string) {
   const restored = await restorePostDoc(id);
   if (!restored) {
-    throw new AppError('Post not found', 404, 'POST_NOT_FOUND');
+    throw new AppError("Post not found", 404, "POST_NOT_FOUND");
   }
   return populateOnePost(restored);
 }
@@ -87,13 +95,9 @@ export async function restorePostService(id: string) {
 export async function hardDeletePostService(id: string) {
   const success = await hardDeletePostDoc(id);
   if (!success) {
-    throw new AppError('Post not found', 404, 'POST_NOT_FOUND');
+    throw new AppError("Post not found", 404, "POST_NOT_FOUND");
   }
-  return { success: true, message: 'Post permanently deleted from database.' };
-}
-
-export async function getTaxonomyService() {
-  return {};
+  return { success: true, message: "Post permanently deleted from database." };
 }
 
 // Function object namespace for backwards compatibility (no class)
@@ -105,5 +109,4 @@ export const PostService = {
   softDeletePost: softDeletePostService,
   restorePost: restorePostService,
   hardDeletePost: hardDeletePostService,
-  getTaxonomy: getTaxonomyService,
 };
